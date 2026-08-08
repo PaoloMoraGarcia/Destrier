@@ -41,3 +41,6 @@ example
 # generated native folders
 /ios
 /android
+
+# Postgres embebido de los tests de esquema
+supabase/tests/.pgdata/

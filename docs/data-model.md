@@ -74,8 +74,26 @@ son preview, y se protege comprobando `entitlements`.
 Esa es la única barrera real: si el `playback_id` se puede leer, el vídeo se puede
 ver. Cualquier lógica de bloqueo que se añada en la app es cosmética.
 
-## Antes de dar el esquema por bueno
+## Verificar el esquema
 
-Aplica las migraciones y comprueba a mano que **un `insert` de curso de pago con
-un autor sin verificar falla**. El final de [`seed.sql`](../supabase/seed.sql)
-tiene esa consulta preparada. Si pasa, el gate no está funcionando.
+```bash
+npm run test:schema
+```
+
+Levanta un Postgres real embebido (sin Docker), aplica las dos migraciones y
+comprueba 19 invariantes. Las que importan de verdad son las negativas — que
+**no** se pueda hacer lo que no se debe:
+
+- Un curso de pago con autor sin verificar es rechazado, tanto al crearlo como
+  al pasar a `one_time` un curso que ya existía.
+- Un curso **gratuito** con autor sin verificar sí se acepta: el modelo abierto
+  del §4 no puede quedar bloqueado por el gate de cobro.
+- `curiosities` no tiene ninguna columna de precio.
+- `purchases` no tiene policy de insert para clientes.
+- Las 15 tablas tienen RLS activo y ninguna se queda sin policies.
+
+Dos límites de este test, por honestidad: el esquema `auth` está simulado, así
+que confirma que las policies se crean y que RLS está activo, **no** que la
+autorización decida bien con un JWT real; y corre sobre Postgres 18, por delante
+de la versión de Supabase. Nada de este DDL depende de esa diferencia, pero la
+prueba definitiva sigue siendo aplicar las migraciones contra el proyecto real.

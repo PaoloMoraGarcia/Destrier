@@ -43,8 +43,13 @@ la app funciona igualmente: el feed sirve los datos de `src/data/mock.ts`.
 ## Verificar un cambio
 
 ```bash
-npm run typecheck
+npm run typecheck    # tipos
+npm run test:schema  # esquema SQL contra un Postgres real, sin Docker
 ```
 
 Y pruébalo en un dispositivo o simulador: el splash y el feed son gesto y
 animación, y ningún test estático te va a decir si se sienten bien.
+
+Si tocas `supabase/migrations/`, `npm run test:schema` es obligatorio. Las reglas
+de monetización del §2 y del §4 están escritas como constraints, y ese test es lo
+único que comprueba que siguen bloqueando lo que deben.
