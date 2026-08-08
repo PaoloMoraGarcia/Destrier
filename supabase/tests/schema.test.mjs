@@ -16,14 +16,40 @@
  *  - Postgres 18 en local; Supabase va por detrás. No afecta a este DDL.
  */
 
-import EmbeddedPostgres from 'embedded-postgres';
-import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS = join(HERE, '..', 'migrations');
 const DATA_DIR = join(HERE, '.pgdata');
+const ROOT = join(HERE, '..', '..');
+
+// npm bloquea los scripts de postinstalación por defecto, así que tras un
+// `npm install` limpio faltan los symlinks de las librerías de Postgres y el
+// test muere con un `dyld: Library not loaded` que no dice nada de esto.
+//
+// El guard lee el propio manifiesto del paquete en vez de comprobar un archivo
+// concreto: los nombres llevan la versión de la librería dentro, así que
+// cualquier comprobación a mano se rompe en la siguiente actualización.
+const platformPkg = join(ROOT, 'node_modules', '@embedded-postgres', `${process.platform}-${process.arch}`);
+const manifest = join(platformPkg, 'native', 'pg-symlinks.json');
+
+if (existsSync(manifest)) {
+  const links = JSON.parse(readFileSync(manifest, 'utf8'));
+  const missing = links.filter(({ target }) => !existsSync(join(platformPkg, target)));
+
+  if (missing.length > 0) {
+    console.log(`Hidratando ${missing.length} symlinks de Postgres (solo la primera vez)…`);
+    execFileSync(process.execPath, [join(platformPkg, 'scripts', 'hydrate-symlinks.js')], {
+      cwd: platformPkg,
+      stdio: 'inherit',
+    });
+  }
+}
+
+const { default: EmbeddedPostgres } = await import('embedded-postgres');
 
 const NORA = '00000000-0000-0000-0000-000000000001'; // verificada
 const KIT = '00000000-0000-0000-0000-000000000002'; // verificada
