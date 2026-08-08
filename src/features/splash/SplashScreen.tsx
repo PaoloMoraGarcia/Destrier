@@ -1,23 +1,30 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { StatusBar } from 'expo-status-bar';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   interpolate,
   runOnJS,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BlobField } from '@/components/BlobField';
-import { GlassSurface } from '@/components/GlassSurface';
-import { Wordmark } from '@/components/Wordmark';
+import { Handwriting } from '@/components/handwriting/Handwriting';
+import { layoutHandwriting } from '@/components/handwriting/layout';
+import {
+  WORDMARK_RATIO,
+  WORDMARK_STROKES,
+  WORDMARK_VIEWBOX,
+} from '@/components/handwriting/wordmark';
 import {
   colors,
-  radius,
+  duration,
+  easeInOutCupertino,
   snapBackSpring,
   spacing,
   SWIPE_CONFIRM_THRESHOLD,
@@ -25,84 +32,116 @@ import {
   type,
 } from '@/theme';
 
-const TAGLINE = "Be happy about the things you don't know.";
-
 /** Velocidad a partir de la cual un flick corto ya cuenta como confirmación. */
 const FLICK_VELOCITY = 900;
+
+/** La pista tiene que estar, pero no competir con el trazo. */
+const HINT_COLOR = 'rgba(0, 0, 0, 0.34)';
+
+/** El eslogan se compone una vez, al cargar el módulo: no depende de nada. */
+const TAGLINE = layoutHandwriting("Be happy about the things you don't know.", {
+  maxWidth: 620,
+  lineHeight: 140,
+});
 
 /**
  * Splash de Bihapia (§6).
  *
- * Un único `progress` (0 → 1) gobierna la pantalla entera: el viraje de los
- * blobs de frío a cálido, la subida de la tarjeta de cristal con el eslogan, y
- * la salida del wordmark. Vive en el hilo de UI, así que sigue al dedo sin pasar
- * por JS ni un solo frame.
+ * Fondo negro plano. El wordmark no es tipografía: es lettering de línea única
+ * que se escribe trazo a trazo, por donde iría la punta del bolígrafo.
  *
- * El gesto tiene doble función (§6.3): revela el eslogan y transiciona al feed.
- * Por debajo del 40% vuelve a su sitio; por encima, se completa.
+ * El gesto de swipe hacia abajo tiene doble función (§6.3): revela el eslogan y
+ * transiciona al feed. Por debajo del 40% vuelve a su sitio; por encima, se
+ * completa.
  */
 export function SplashScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
+  const { height, width } = useWindowDimensions();
 
-  const progress = useSharedValue(0);
+  const written = useSharedValue(0);
+  const swipe = useSharedValue(0);
   const [hintVisible, setHintVisible] = useState(false);
 
-  /** Recorrido del dedo que equivale a un progreso completo. */
+  // El eslogan se escribe con el dedo: su progreso ES el del gesto. Por eso
+  // desdibujarlo no necesita código — es el mismo valor yendo hacia atrás.
+  // El arranque va retrasado un poco para que el wordmark tenga tiempo de
+  // apartarse antes de que caiga la primera letra.
+  const tagline = useDerivedValue(() => interpolate(swipe.value, [0.08, 1], [0, 1], 'clamp'));
+
   const revealDistance = height * 0.3;
+
+  useEffect(() => {
+    written.value = withTiming(
+      1,
+      { duration: duration.wordmark, easing: easeInOutCupertino },
+      (finished) => {
+        if (finished) runOnJS(setHintVisible)(true);
+      }
+    );
+  }, [written]);
 
   const goToFeed = useCallback(() => {
     router.replace('/feed');
   }, [router]);
 
-  const showHint = useCallback(() => setHintVisible(true), []);
-
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
-      progress.value = Math.min(Math.max(event.translationY / revealDistance, 0), 1);
+      swipe.value = Math.min(Math.max(event.translationY / revealDistance, 0), 1);
     })
     .onEnd((event) => {
-      const confirmed =
-        progress.value > SWIPE_CONFIRM_THRESHOLD || event.velocityY > FLICK_VELOCITY;
+      const confirmed = swipe.value > SWIPE_CONFIRM_THRESHOLD || event.velocityY > FLICK_VELOCITY;
 
-      if (confirmed) {
-        progress.value = withTiming(1, timing.medium, (finished) => {
-          if (finished) runOnJS(goToFeed)();
-        });
-      } else {
-        progress.value = withSpring(0, snapBackSpring);
+      if (!confirmed) {
+        // Al volver, el eslogan se desescribe solo: el trazo retrocede por donde
+        // vino, como si se rebobinara la mano.
+        swipe.value = withSpring(0, snapBackSpring);
+        return;
       }
+
+      // Confirmado: se termina de escribir lo que falte y se entra al feed.
+      swipe.value = withTiming(1, timing.slow, (finished) => {
+        if (finished) runOnJS(goToFeed)();
+      });
     });
 
-  // El wordmark cede el protagonismo: sube, encoge y se apaga a medida que entra
-  // el eslogan. No desaparece del todo hasta el final del recorrido.
   const wordmarkStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 0.75], [1, 0], 'clamp'),
+    opacity: interpolate(swipe.value, [0, 0.75], [1, 0], 'clamp'),
     transform: [
-      { translateY: interpolate(progress.value, [0, 1], [0, -height * 0.14]) },
-      { scale: interpolate(progress.value, [0, 1], [1, 0.84]) },
+      { translateY: interpolate(swipe.value, [0, 1], [0, -height * 0.14]) },
+      { scale: interpolate(swipe.value, [0, 1], [1, 0.86]) },
     ],
   }));
 
-  const cardStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0.05, 0.45], [0, 1], 'clamp'),
-    transform: [
-      { translateY: interpolate(progress.value, [0, 1], [height * 0.45, 0], 'clamp') },
-    ],
+  // El eslogan no se desvanece hacia dentro: el contenedor está a pleno desde
+  // que arranca el gesto, y lo único que aparece es el propio trazo escribiéndose.
+  const taglineStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(swipe.value, [0.1, 0.4], [0, 1], 'clamp'),
   }));
 
   const hintStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 0.2], [1, 0], 'clamp'),
+    opacity: interpolate(swipe.value, [0, 0.2], [1, 0], 'clamp'),
   }));
+
+  const wordmarkWidth = width * 0.74;
+  const taglineWidth = width * 0.88;
 
   return (
     <GestureDetector gesture={panGesture}>
       <View style={styles.root}>
-        <BlobField progress={progress} />
+        {/* Única pantalla clara de la app: la barra va en oscuro solo aquí. */}
+        <StatusBar style="dark" />
 
-        <Animated.View style={[styles.wordmarkSlot, wordmarkStyle]}>
-          <Wordmark onFinished={showHint} />
+        <Animated.View style={wordmarkStyle}>
+          <Handwriting
+            strokes={WORDMARK_STROKES}
+            progress={written}
+            viewBox={WORDMARK_VIEWBOX}
+            color={colors.text.onLight}
+            strokeWidth={7}
+            width={wordmarkWidth}
+            height={wordmarkWidth / WORDMARK_RATIO}
+          />
         </Animated.View>
 
         {hintVisible && (
@@ -114,12 +153,19 @@ export function SplashScreen() {
           </Animated.View>
         )}
 
-        <Animated.View
-          style={[styles.cardSlot, { paddingBottom: insets.bottom + spacing.xl }, cardStyle]}
-          pointerEvents="none">
-          <GlassSurface variant="card" style={styles.card} intensity={55}>
-            <Text style={styles.tagline}>{TAGLINE}</Text>
-          </GlassSurface>
+        <Animated.View style={[styles.taglineSlot, taglineStyle]} pointerEvents="none">
+          <Handwriting
+            strokes={TAGLINE.strokes}
+            progress={tagline}
+            viewBox={TAGLINE.viewBox}
+            color={colors.text.onLight}
+            // Más fino que el wordmark a propósito: el eslogan se dibuja mucho
+            // más pequeño en pantalla, y con el grosor del wordmark los ojos de
+            // las letras cerradas (s, e, o, a) se rellenan y dejan de leerse.
+            strokeWidth={5}
+            width={taglineWidth}
+            height={taglineWidth / TAGLINE.ratio}
+          />
         </Animated.View>
       </View>
     </GestureDetector>
@@ -129,11 +175,11 @@ export function SplashScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.background,
-    justifyContent: 'center',
-  },
-  wordmarkSlot: {
+    // Blanco de cuaderno: tinta negra sobre papel. Es la única pantalla clara de
+    // la app, y a propósito — el trazo negro es lo que se tiene que ver.
+    backgroundColor: colors.sheet,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   hint: {
     position: 'absolute',
@@ -142,36 +188,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  /** Cheurón hacia abajo hecho con un cuadrado rotado: sin dependencia de iconos. */
   hintChevron: {
     width: 12,
     height: 12,
     borderRightWidth: 1.5,
     borderBottomWidth: 1.5,
-    borderColor: colors.text.tertiary,
+    borderColor: HINT_COLOR,
     transform: [{ rotate: '45deg' }],
   },
   hintLabel: {
     ...type.caption,
-    color: colors.text.tertiary,
+    color: HINT_COLOR,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
-  cardSlot: {
+  taglineSlot: {
     position: 'absolute',
     left: 0,
     right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    top: 0,
     bottom: 0,
-    paddingHorizontal: spacing.xl,
-  },
-  card: {
-    borderRadius: radius.xl,
-    paddingVertical: spacing.xxl,
-    paddingHorizontal: spacing.xl,
-  },
-  tagline: {
-    ...type.title,
-    color: colors.text.primary,
-    textAlign: 'center',
   },
 });

@@ -72,6 +72,45 @@ El feed lee de `src/data/feedRepository.ts`, que sirve datos de prueba mientras 
 haya credenciales de Supabase. La app es demostrable el día uno y la pantalla no
 cambiará ni una línea cuando llegue el backend real.
 
+## El splash se escribe, no aparece
+
+El wordmark **no es tipografía**. Es lettering de línea única dibujado a medida
+en `src/components/handwriting/wordmark.ts`, animado con `strokeDasharray` +
+`strokeDashoffset`: lo que crece en pantalla es la propia línea, no una máscara
+que descubre algo ya dibujado.
+
+Esa distinción es la razón de todo el módulo. Una fuente da **contornos
+cerrados**, así que animar el contorno de una letra dibuja su silueta —se ve el
+bolígrafo bajar por un lado y volver por el otro—, y cualquier máscara sobre
+texto es un barrido, no una escritura. Para que parezca una mano, el trazo tiene
+que ser la línea que recorre la punta del bolígrafo, y eso hay que dibujarlo.
+
+`alphabet.ts` lleva 19 glifos cursivos en las mismas métricas, con los que se
+compone el eslogan. Cada glifo entra por (0,108) y sale por (advance,108) con el
+enlace incluido, así que las letras se encadenan solas sin lógica de ligaduras.
+
+`layout.ts` reparte el tiempo de escritura **proporcional a la longitud de cada
+trazo**, no por número de letras. Si cada letra recibiera la misma porción, una
+"i" se escribiría tan despacio como una "w" y el resultado se lee como una
+máquina.
+
+`measurePath.ts` calcula la longitud del trazado por muestreo, porque
+react-native-svg no tiene `getTotalLength()` y sin la longitud no hay animación.
+
+### Fondo blanco
+
+Única pantalla clara de la app: tinta negra sobre papel. El trazo del eslogan va
+más fino que el del wordmark (5 frente a 7) porque se dibuja mucho más pequeño, y
+con el grosor del wordmark los ojos de las letras cerradas se rellenaban y la "s"
+dejaba de leerse.
+
+### El eslogan lo escribe el dedo
+
+El progreso de escritura **es** el valor del gesto. Arrastras hacia abajo y se va
+escribiendo; subes y se desescribe, sin una línea de código extra: es el mismo
+valor yendo hacia atrás. Se descartó una animación de duración fija porque
+bloqueaba la entrada al feed durante tres segundos en cada arranque.
+
 ## Tres niveles de profundidad, un solo valor
 
 El feed no tiene "estados": tiene una profundidad continua, `depth`, que va de 0

@@ -37,6 +37,10 @@ la app funciona igualmente: el feed sirve los datos de `src/data/mock.ts`.
 - **La primera vista de una publicación no lleva interfaz.** Ni iconos, ni
   nombre, ni contadores. Todo eso aparece al tocar. Si añades algo encima del
   contenido por defecto, estás rompiendo el §5.
+- **El wordmark no es una fuente.** Es lettering de línea única en
+  `src/components/handwriting/`. No lo sustituyas por texto con una tipografía
+  cursiva: una fuente da contornos cerrados y entonces la animación deja de ser
+  escritura y pasa a ser un barrido, que es justo lo que se descartó.
 - **El feed tiene tres niveles y un solo valor que los gobierna.** `depth` va de
   0 (contenido limpio) a 1 (caption) a 2 (ficha completa). No añadas estados
   paralelos: el caption y la ficha son valores derivados de `depth`.
