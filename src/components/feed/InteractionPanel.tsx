@@ -14,11 +14,15 @@ interface InteractionPanelProps {
 }
 
 /**
- * Panel de interacción del feed (§5, §7).
+ * APARCADO — no está montado en ninguna pantalla ahora mismo.
  *
- * Todo lo que Instagram pone encima del contenido vive aquí, y aquí solo se ve
- * cuando el usuario lo pide: avatar, nombre, contadores y el CTA del curso. La
- * primera vista de una publicación no tiene un solo elemento de interfaz.
+ * El tap del feed dejó de subir este panel: ahora abre una hoja blanca desde el
+ * centro con el caption (ver `CaptionOverlay`). Queda pendiente decidir dónde
+ * viven los likes, comentarios, guardar y el CTA "ver curso completo", que son
+ * las piezas que este componente ya resuelve.
+ *
+ * No lo borres hasta que esa decisión esté tomada: aquí está el formato de
+ * contadores, el badge de verificado y el CTA con precio ya resueltos.
  */
 export function InteractionPanel({ curiosity, revealed, bottomInset }: InteractionPanelProps) {
   const panelHeight = useSharedValue(320);

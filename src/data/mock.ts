@@ -49,6 +49,7 @@ export const MOCK_FEED: Curiosity[] = [
     categorySlug: 'tech-web',
     videoUrl: SAMPLE_VIDEOS[0],
     posterUrl: null,
+    caption: 'A landing page is just a promise with a button underneath it.',
     engagement: { likes: 1284, comments: 96, saves: 311, likedByMe: false, savedByMe: false },
     course: {
       id: 'k1',
@@ -79,6 +80,7 @@ export const MOCK_FEED: Curiosity[] = [
     categorySlug: 'business-sales',
     videoUrl: SAMPLE_VIDEOS[1],
     posterUrl: null,
+    caption: 'Stop pitching. Describe their problem better than they can.',
     engagement: { likes: 640, comments: 41, saves: 128, likedByMe: false, savedByMe: true },
     course: {
       id: 'n1',
@@ -109,6 +111,7 @@ export const MOCK_FEED: Curiosity[] = [
     categorySlug: 'general-curiosities',
     videoUrl: SAMPLE_VIDEOS[2],
     posterUrl: null,
+    caption: 'Nobody agreed on how long a second was until 1967.',
     engagement: { likes: 221, comments: 12, saves: 44, likedByMe: false, savedByMe: false },
     course: null,
     createdAt: '2026-08-05T14:22:00Z',
@@ -139,6 +142,7 @@ export const MOCK_FEED: Curiosity[] = [
     categorySlug: 'tech-web',
     videoUrl: SAMPLE_VIDEOS[3],
     posterUrl: null,
+    caption: null, // sin caption: al tocar solo aparece la firma
     engagement: { likes: 977, comments: 63, saves: 210, likedByMe: false, savedByMe: false },
     course: null,
     createdAt: '2026-08-06T20:10:00Z',

@@ -31,11 +31,11 @@ const viewabilityConfig = {
 
 export function FeedList({ items, onEndReached }: FeedListProps) {
   const { height: windowHeight } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [revealed, setRevealed] = useState(false);
 
   // Contenido a sangre: la tarjeta ocupa la pantalla entera, incluidos los safe
-  // areas. Los insets solo sirven para colocar el panel, no para recortar.
+  // areas.
   const itemHeight = windowHeight;
 
   const handleViewableItemsChanged = useRef(
@@ -54,20 +54,20 @@ export function FeedList({ items, onEndReached }: FeedListProps) {
         height={itemHeight}
         isActive={index === activeIndex}
         shouldLoad={Math.abs(index - activeIndex) <= PRELOAD_RADIUS}
-        bottomInset={insets.bottom}
+        onRevealChange={index === activeIndex ? setRevealed : undefined}
       />
     ),
-    [activeIndex, itemHeight, insets.bottom]
+    [activeIndex, itemHeight]
   );
 
-  // Una entradilla de fondo claro deja la hora y la batería invisibles si la
-  // barra sigue en blanco. El vídeo siempre va en claro: no se puede saber qué
-  // hay debajo del notch en cada frame.
+  // La hora y la batería desaparecen si la barra sigue en blanco sobre una
+  // superficie clara. Hay dos formas de acabar en blanco: una entradilla de
+  // fondo claro, o la hoja del caption abierta sobre un reel.
   const activeItem = items[activeIndex];
-  const statusBarStyle =
-    activeItem?.kind === 'text' && isLightBackground(activeItem.backgroundColor)
-      ? 'dark'
-      : 'light';
+  const onLightSurface =
+    (activeItem?.kind === 'text' && isLightBackground(activeItem.backgroundColor)) ||
+    (activeItem?.kind === 'video' && revealed);
+  const statusBarStyle = onLightSurface ? 'dark' : 'light';
 
   return (
     <View style={styles.container}>

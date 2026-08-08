@@ -47,14 +47,18 @@ interface CuriosityBase {
 }
 
 /**
- * Reel de vídeo full-bleed. No lleva caption: se decidió eliminar el caption
- * quemado y no sustituirlo por uno nativo — el vídeo va absolutamente limpio
- * (§5, minimalismo radical).
+ * Reel de vídeo full-bleed.
+ *
+ * En reposo no se ve absolutamente nada encima del vídeo. El `caption` no va
+ * quemado en el archivo: es un dato que la app pinta al tocar, sobre una hoja
+ * blanca que se abre desde el centro.
  */
 export interface VideoCuriosity extends CuriosityBase {
   kind: 'video';
   videoUrl: string;
   posterUrl: string | null;
+  /** null cuando el creador no puso texto: entonces solo se muestra la firma. */
+  caption: string | null;
 }
 
 /** Entradilla de solo texto sobre fondo sólido. */

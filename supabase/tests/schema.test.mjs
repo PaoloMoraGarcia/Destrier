@@ -106,7 +106,7 @@ await client.query(`
 console.log('OK');
 
 console.log('\n=== 2. Aplicar migraciones ===');
-for (const file of ['0001_init.sql', '0002_rls.sql']) {
+for (const file of ['0001_init.sql', '0002_rls.sql', '0003_video_caption.sql']) {
   try {
     await client.query(readFileSync(`${MIGRATIONS}/${file}`, 'utf8'));
     record(`Migración ${file} aplica sin errores`, true);
@@ -218,6 +218,23 @@ await expectFailure(
   'Curiosidad de texto sin cuerpo es rechazada',
   `insert into curiosities (author_id, category_slug, kind) values ('${KIT}', 'tech-web', 'text')`,
   'shape_matches_kind'
+);
+
+await expectFailure(
+  client,
+  'Caption en una entradilla de texto es rechazado (su cuerpo ya es el texto)',
+  `insert into curiosities (author_id, category_slug, kind, text_body, background_color, caption)
+   values ('${KIT}', 'tech-web', 'text', 'Cuerpo', '#FFFFFF', 'Caption que sobra')`,
+  'caption_only_on_video'
+);
+
+await expectFailure(
+  client,
+  'Caption de más de 140 caracteres es rechazado',
+  `insert into media_assets (id, owner_id) values ('22222222-2222-2222-2222-222222222222', '${KIT}');
+   insert into curiosities (author_id, category_slug, kind, media_id, caption)
+   values ('${KIT}', 'tech-web', 'video', '22222222-2222-2222-2222-222222222222', '${'x'.repeat(141)}')`,
+  'caption_check'
 );
 
 console.log('\n=== 7. Contadores y RLS ===');

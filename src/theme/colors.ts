@@ -10,6 +10,12 @@ export const colors = {
   /** Fondo de la app. Negro puro, no gris oscuro: da profundidad al glass. */
   background: '#000000',
 
+  /**
+   * Hoja blanca que se abre desde el centro al tocar un reel. Es opaca a
+   * propósito: mientras lees el caption, el vídeo no compite.
+   */
+  sheet: '#FFFFFF',
+
   /** Acento de marca. */
   amber: '#F5A623',
   amberSoft: '#FFC65C',
