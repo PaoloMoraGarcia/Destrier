@@ -72,6 +72,40 @@ El feed lee de `src/data/feedRepository.ts`, que sirve datos de prueba mientras 
 haya credenciales de Supabase. La app es demostrable el día uno y la pantalla no
 cambiará ni una línea cuando llegue el backend real.
 
+## Tres niveles de profundidad, un solo valor
+
+El feed no tiene "estados": tiene una profundidad continua, `depth`, que va de 0
+a 2.
+
+```
+0 — contenido a sangre, sin un solo elemento de interfaz
+1 — el caption: hoja blanca desde el centro (reel) o la firma (texto)
+2 — la ficha completa, que sube desde abajo
+```
+
+Un tap alterna entre 0 y 1. Un arrastre vertical mueve entre niveles. El caption
+y la ficha son valores derivados del mismo `depth`, así que no hay dos estados
+que se puedan desincronizar.
+
+**El arrastre solo está activo a partir del nivel 1.** En el nivel 0 el eje
+vertical pertenece al feed, que es donde pasas de una publicación a la siguiente;
+dos gestos peleando por el mismo eje no se pueden desambiguar y siempre pierde
+alguien. Por eso, mientras hay algo revelado, `scrollEnabled` está en false.
+
+La consecuencia es que arrastrar hacia abajo desde el nivel 1 cierra el caption:
+es la salida natural del modo lectura y evita que el usuario quede atrapado
+teniendo que acordarse de tocar otra vez.
+
+## La ficha no tiene contadores
+
+Botones grandes que cambian de color al pulsarlos, y ningún número: ni likes, ni
+comentarios, ni guardados. Enseñar cuánta gente ha dado a "me gusta" es
+exactamente la comparación social que el anti-FOMO quiere evitar. Sabes lo que
+has hecho tú; no cuántos van ganando.
+
+Fondo plano, no glass: la ficha es una pantalla aparte, no una capa flotando
+sobre el contenido.
+
 ## Barra de estado adaptativa, segunda vuelta
 
 `FeedList` mira dos cosas para decidir el color de la barra: si la entradilla
@@ -81,11 +115,11 @@ el color de la barra es una decisión de pantalla, no de tarjeta.
 
 ## Pendientes que siguen abiertos
 
-- **Dónde viven likes, comentarios, guardar y el CTA "ver curso completo".** Al
-  dejar de subir el panel inferior se quedaron sin sitio. `InteractionPanel.tsx`
-  sigue en el repo, sin montar, esperando esa decisión.
 - La portada de las publicaciones: blanco y negro fijos, letras negras o blancas,
   estilo de trazo dibujado. Pendiente de concretar.
+- Los likes y guardados de la ficha son estado local: no se persisten en ningún
+  sitio hasta que exista auth y la escritura contra `interactions`.
+- "Comments" es hoy un botón sin destino.
 - La consulta real de Supabase en `feedRepository` (hoy lanza si hay credenciales).
 - El ranking del feed, incluidas las promociones del §3.
 - Auth, subida de contenido, pagos (RevenueCat) y comentarios funcionales.

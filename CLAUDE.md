@@ -37,9 +37,15 @@ la app funciona igualmente: el feed sirve los datos de `src/data/mock.ts`.
 - **La primera vista de una publicación no lleva interfaz.** Ni iconos, ni
   nombre, ni contadores. Todo eso aparece al tocar. Si añades algo encima del
   contenido por defecto, estás rompiendo el §5.
+- **El feed tiene tres niveles y un solo valor que los gobierna.** `depth` va de
+  0 (contenido limpio) a 1 (caption) a 2 (ficha completa). No añadas estados
+  paralelos: el caption y la ficha son valores derivados de `depth`.
 - **Del tap no sale nada desde abajo.** En un reel se abre una hoja blanca desde
   el centro con el caption; en una entradilla de texto solo aparece la firma. Si
   vuelves a montar un panel inferior, estás deshaciendo una decisión tomada.
+- **Sin contadores en ningún sitio.** La ficha tiene botones que cambian de color,
+  no números. Enseñar cuánta gente ha dado a "me gusta" es la comparación social
+  que el producto existe para evitar.
 - **El caption nunca va quemado en el vídeo.** Es un campo de `curiosities` que
   pinta la app, para que sea moderable, traducible y accesible.
 - **Nada escribe en `purchases` desde el cliente.** Eso lo hace el webhook del

@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, isLightBackground } from '@/theme';
 import { Curiosity } from '@/types/domain';
 
-import { FeedItem } from './FeedItem';
+import { FeedItem, FeedSurface } from './FeedItem';
 
 interface FeedListProps {
   items: Curiosity[];
@@ -31,11 +31,12 @@ const viewabilityConfig = {
 
 export function FeedList({ items, onEndReached }: FeedListProps) {
   const { height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [activeIndex, setActiveIndex] = useState(0);
-  const [revealed, setRevealed] = useState(false);
+  const [surface, setSurface] = useState<FeedSurface>('content');
 
   // Contenido a sangre: la tarjeta ocupa la pantalla entera, incluidos los safe
-  // areas.
+  // areas. Los insets solo colocan el contenido de la ficha.
   const itemHeight = windowHeight;
 
   const handleViewableItemsChanged = useRef(
@@ -54,19 +55,22 @@ export function FeedList({ items, onEndReached }: FeedListProps) {
         height={itemHeight}
         isActive={index === activeIndex}
         shouldLoad={Math.abs(index - activeIndex) <= PRELOAD_RADIUS}
-        onRevealChange={index === activeIndex ? setRevealed : undefined}
+        bottomInset={insets.bottom}
+        onSurfaceChange={index === activeIndex ? setSurface : undefined}
       />
     ),
-    [activeIndex, itemHeight]
+    [activeIndex, itemHeight, insets.bottom]
   );
 
-  // La hora y la batería desaparecen si la barra sigue en blanco sobre una
-  // superficie clara. Hay dos formas de acabar en blanco: una entradilla de
-  // fondo claro, o la hoja del caption abierta sobre un reel.
+  // La hora y la batería desaparecen si la barra no acompaña a la superficie que
+  // hay debajo. Se puede acabar en claro de dos formas: una entradilla de fondo
+  // claro, o la hoja del caption abierta sobre un reel. La ficha es negra, así
+  // que en el nivel 2 siempre vuelve a claro.
   const activeItem = items[activeIndex];
   const onLightSurface =
-    (activeItem?.kind === 'text' && isLightBackground(activeItem.backgroundColor)) ||
-    (activeItem?.kind === 'video' && revealed);
+    surface !== 'actions' &&
+    ((activeItem?.kind === 'text' && isLightBackground(activeItem.backgroundColor)) ||
+      (activeItem?.kind === 'video' && surface === 'caption'));
   const statusBarStyle = onLightSurface ? 'dark' : 'light';
 
   return (
@@ -87,6 +91,10 @@ export function FeedList({ items, onEndReached }: FeedListProps) {
         // eso te teletransporta varias publicaciones. Aquí estorba.
         maintainVisibleContentPosition={{ disabled: true }}
         showsVerticalScrollIndicator={false}
+        // En cuanto se abre el caption, el eje vertical deja de ser del feed y
+        // pasa a ser del gesto de profundidad. Sin esto, el swipe para abrir la
+        // ficha y el swipe para pasar de publicación pelean por el mismo dedo.
+        scrollEnabled={surface === 'content'}
         onViewableItemsChanged={handleViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
         onEndReached={onEndReached}
