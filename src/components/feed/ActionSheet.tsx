@@ -1,8 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { interpolate, SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 
+import { useSession } from '@/lib/session';
 import { colors, radius, spacing, type } from '@/theme';
 import { CourseRef, Curiosity } from '@/types/domain';
 
@@ -25,8 +27,23 @@ interface ActionSheetProps {
  * ganando.
  */
 export function ActionSheet({ curiosity, progress, open, bottomInset }: ActionSheetProps) {
+  const router = useRouter();
+  const { signedIn } = useSession();
   const [liked, setLiked] = useState(curiosity.engagement.likedByMe);
   const [saved, setSaved] = useState(curiosity.engagement.savedByMe);
+
+  // Ver el feed no pide cuenta; dejar rastro en él sí. Cuando no hay sesión se
+  // pide aquí, en el momento en que hace falta, y no en la puerta de la app.
+  const requireSession = useCallback(
+    (action: () => void) => () => {
+      if (!signedIn) {
+        router.push('/sign-in');
+        return;
+      }
+      action();
+    },
+    [signedIn, router]
+  );
 
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: interpolate(progress.value, [0, 1], [1000, 0], 'clamp') }],
@@ -51,13 +68,13 @@ export function ActionSheet({ curiosity, progress, open, bottomInset }: ActionSh
             icon={liked ? 'heart' : 'heart-outline'}
             label="Like"
             active={liked}
-            onPress={() => setLiked((value) => !value)}
+            onPress={requireSession(() => setLiked((value) => !value))}
           />
           <BigButton
             icon={saved ? 'bookmark' : 'bookmark-outline'}
             label="Save"
             active={saved}
-            onPress={() => setSaved((value) => !value)}
+            onPress={requireSession(() => setSaved((value) => !value))}
           />
           <BigButton icon="chatbubble-outline" label="Comments" active={false} onPress={() => {}} />
         </View>

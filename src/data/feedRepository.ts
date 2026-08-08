@@ -2,13 +2,14 @@ import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 import { Curiosity } from '@/types/domain';
 
 import { MOCK_FEED } from './mock';
+import { FeedRow, rowToCuriosity } from './rowToCuriosity';
 
 /**
  * Única puerta de entrada del feed a los datos.
  *
- * Mientras no haya credenciales de Supabase sirve los datos de prueba, así que
- * la app es demostrable el día uno. Cuando las haya, la pantalla no cambia una
- * línea: solo cambia lo que devuelve esta función.
+ * Sin credenciales de Supabase sirve los datos de prueba, así que la app es
+ * demostrable recién clonada y se puede trabajar en la interfaz sin backend. Con
+ * credenciales lee de la vista `feed_items`, que es donde vive la consulta.
  */
 
 export interface FeedPage {
@@ -20,20 +21,36 @@ export interface FeedPage {
 const PAGE_SIZE = 10;
 
 export async function fetchFeedPage(cursor?: string | null): Promise<FeedPage> {
-  if (!isSupabaseConfigured) {
-    return fetchMockPage(cursor);
-  }
-
-  const supabase = getSupabase();
+  const supabase = isSupabaseConfigured ? getSupabase() : null;
   if (!supabase) return fetchMockPage(cursor);
 
-  // TODO: sustituir por la consulta real contra `curiosities` una vez creado el
-  // proyecto de Supabase y generados los tipos con `supabase gen types`.
-  // El feed rankeado (promociones del §3, señales de interés) es trabajo aparte:
-  // aquí solo debería quedar la llamada, no la lógica de ranking.
-  throw new Error(
-    'feedRepository: falta implementar la consulta de Supabase. Ver supabase/migrations/0001_init.sql.'
-  );
+  // Paginación por cursor sobre `created_at`, no por offset: con un feed al que
+  // se le añaden publicaciones constantemente, un offset repite y se salta
+  // elementos en cuanto entra contenido nuevo entre dos páginas.
+  let query = supabase
+    .from('feed_items')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(PAGE_SIZE);
+
+  if (cursor) {
+    query = query.lt('created_at', cursor);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    throw new Error(`No se pudo cargar el feed: ${error.message}`);
+  }
+
+  const rows = (data ?? []) as FeedRow[];
+  const items = rows.map((row) => rowToCuriosity(row, supabase));
+
+  return {
+    items,
+    // Solo hay más si la página vino llena. Con menos, se acabó.
+    nextCursor: rows.length === PAGE_SIZE ? rows[rows.length - 1].created_at : null,
+  };
 }
 
 function fetchMockPage(cursor?: string | null): FeedPage {

@@ -44,3 +44,7 @@ example
 
 # Postgres embebido de los tests de esquema
 supabase/tests/.pgdata/
+
+# Bundler local (CocoaPods)
+vendor/bundle/
+.bundle/

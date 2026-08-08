@@ -13,8 +13,13 @@ está montado el código. El porqué técnico está en `docs/decisions.md`.
 npx expo start
 ```
 
-Escanea el QR con Expo Go, o `--ios` / `--android` para simulador. Sin `.env.local`
-la app funciona igualmente: el feed sirve los datos de `src/data/mock.ts`.
+Y en otra ventana, Run desde Xcode (`xed ios`) o `npx expo run:ios`. El montaje
+nativo de esta máquina está en [docs/native-setup.md](docs/native-setup.md) —
+tiene truco, porque el Ruby del sistema no sirve.
+
+Sin `.env.local` la app funciona igualmente: el feed sirve los datos de
+`src/data/mock.ts` y no hay sesión. **Ese camino no se puede romper**: es lo que
+permite trabajar en la interfaz sin backend.
 
 ## Mapa
 
@@ -54,6 +59,13 @@ la app funciona igualmente: el feed sirve los datos de `src/data/mock.ts`.
   pinta la app, para que sea moderable, traducible y accesible.
 - **Nada escribe en `purchases` desde el cliente.** Eso lo hace el webhook del
   proveedor de pago con la service role key.
+- **El feed se ve sin cuenta.** El §2 dice que la curiosidad no tiene fricción.
+  La sesión se pide en el momento de interactuar, nunca al abrir la app. No
+  metas un muro de registro en la puerta.
+- **Los cursos se cobran con IAP, no con Stripe.** Es obligatorio en iOS
+  (guideline 3.1.1) y condiciona el margen. Ver [docs/app-store.md](docs/app-store.md).
+- **No añadas login social sin leer antes** `docs/app-store.md`: en cuanto haya
+  Google o Facebook, Sign in with Apple pasa a ser obligatorio.
 
 ## Verificar un cambio
 

@@ -99,14 +99,43 @@ await client.connect();
 console.log('\n=== 1. Stub del esquema auth (lo aporta Supabase, aquí no existe) ===');
 await client.query(`
   create schema if not exists auth;
-  create table auth.users (id uuid primary key);
-  create function auth.uid() returns uuid language sql stable as $$ select null::uuid $$;
-  insert into auth.users (id) values ('${NORA}'), ('${KIT}'), ('${SAM}');
+  create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb default '{}'::jsonb);
+
+  -- En Supabase, auth.uid() saca el usuario del JWT. Aquí lo saca de una
+  -- variable de sesión, que es lo que permite ejecutar la misma consulta
+  -- haciéndose pasar por usuarios distintos y comprobar qué ve cada uno.
+  create function auth.uid() returns uuid language sql stable as $$
+    select nullif(current_setting('bihapia.test_user', true), '')::uuid
+  $$;
+
+  -- Los roles que usa Supabase. Hacen falta de verdad: el usuario 'postgres' es
+  -- superusuario y **se salta RLS**, así que un test que consultara con él daría
+  -- todo por bueno sin comprobar una sola policy.
+  create role anon nologin;
+  create role authenticated nologin;
+  grant usage on schema public to anon, authenticated;
 `);
 console.log('OK');
 
+/** Ejecuta la consulta como un usuario con sesión, o como anónimo si es null. */
+async function asUser(userId, sql) {
+  await client.query(`select set_config('bihapia.test_user', $1, false)`, [userId ?? '']);
+  await client.query(`set role ${userId ? 'authenticated' : 'anon'}`);
+  try {
+    return await client.query(sql);
+  } finally {
+    await client.query('reset role');
+  }
+}
+
 console.log('\n=== 2. Aplicar migraciones ===');
-for (const file of ['0001_init.sql', '0002_rls.sql', '0003_video_caption.sql']) {
+for (const file of [
+  '0001_init.sql',
+  '0002_rls.sql',
+  '0003_video_caption.sql',
+  '0004_profile_on_signup.sql',
+  '0005_feed_view.sql',
+]) {
   try {
     await client.query(readFileSync(`${MIGRATIONS}/${file}`, 'utf8'));
     record(`Migración ${file} aplica sin errores`, true);
@@ -116,18 +145,49 @@ for (const file of ['0001_init.sql', '0002_rls.sql', '0003_video_caption.sql']) 
   }
 }
 
-console.log('\n=== 3. Datos base ===');
+console.log('\n=== 3. Alta de usuarios (via trigger, como en producción) ===');
+// Nadie inserta en `profiles` a mano: se da de alta en auth.users y el trigger
+// de 0004 tiene que hacer el resto. Es la forma real y de paso lo prueba.
 await client.query(`
-  insert into profiles (id, handle, display_name) values
-    ('${NORA}', 'noraverse',   'Nora Vessel'),
-    ('${KIT}',  'kitbuilds',   'Kit Aranda'),
-    ('${SAM}',  'samsaysless', 'Sam Oyelaran');
-  insert into creator_verifications (profile_id, status, reviewed_at) values
-    ('${NORA}', 'approved', now()),
-    ('${KIT}',  'approved', now()),
-    ('${SAM}',  'none',     null);
+  insert into auth.users (id, email, raw_user_meta_data) values
+    ('${NORA}', 'nora@example.com', '{"display_name":"Nora Vessel"}'),
+    ('${KIT}',  'kit@example.com',  '{"display_name":"Kit Aranda"}'),
+    ('${SAM}',  'sam@example.com',  '{}');
 `);
-console.log('3 perfiles; Nora y Kit verificadas, Sam no.');
+
+const created = await client.query(
+  `select id, handle, display_name from profiles order by handle`
+);
+record(
+  'Registrarse crea el perfil solo',
+  created.rowCount === 3,
+  created.rows.map((r) => `${r.handle} (${r.display_name})`).join(', ')
+);
+
+const autoVerifications = await client.query(`select count(*)::int as n from creator_verifications`);
+record(
+  'Y su fila de verificación en "none"',
+  autoVerifications.rows[0].n === 3,
+  `${autoVerifications.rows[0].n} filas`
+);
+
+// Handles legibles para el resto del test.
+await client.query(`
+  update profiles set handle = 'noraverse',   display_name = 'Nora Vessel'  where id = '${NORA}';
+  update profiles set handle = 'kitbuilds',   display_name = 'Kit Aranda'   where id = '${KIT}';
+  update profiles set handle = 'samsaysless', display_name = 'Sam Oyelaran' where id = '${SAM}';
+  update creator_verifications set status = 'approved', reviewed_at = now()
+    where profile_id in ('${NORA}', '${KIT}');
+`);
+
+const verified = await client.query(
+  `select count(*)::int as n from profiles where is_verified`
+);
+record(
+  'Aprobar la verificación marca el perfil como verificado',
+  verified.rows[0].n === 2,
+  `${verified.rows[0].n} perfiles verificados (Nora y Kit)`
+);
 
 console.log('\n=== 4. LA PRUEBA QUE IMPORTA: gate de KYC (§4) ===');
 
@@ -298,6 +358,137 @@ record(
   'purchases no tiene policy de insert para clientes',
   Number(purchasesInsert.rows[0].n) === 0,
   `policies de insert: ${purchasesInsert.rows[0].n}`
+);
+
+console.log('\n=== 8. El feed visto por cada usuario (RLS de verdad) ===');
+
+// Un curso de pago de Kit, con dos lecciones: una de preview y una que no.
+await client.query(`
+  insert into media_assets (id, owner_id, storage_path, status) values
+    ('33333333-3333-3333-3333-333333333333', '${KIT}', 'kit/preview.mp4', 'ready'),
+    ('44444444-4444-4444-4444-444444444444', '${KIT}', 'kit/lesson2.mp4', 'ready');
+
+  insert into curiosities (id, author_id, category_slug, kind, media_id, caption) values
+    ('aaaaaaaa-0000-0000-0000-000000000001', '${KIT}', 'tech-web', 'video',
+     '33333333-3333-3333-3333-333333333333', 'A landing page is just a promise.'),
+    ('aaaaaaaa-0000-0000-0000-000000000002', '${KIT}', 'tech-web', 'video',
+     '44444444-4444-4444-4444-444444444444', 'Lección de pago.');
+
+  insert into courses (id, author_id, category_slug, title, pricing_mode, price_cents, status, published_at)
+  values ('cccccccc-0000-0000-0000-000000000001', '${KIT}', 'tech-web',
+          'Ship a landing page in a weekend', 'one_time', 1900, 'published', now());
+
+  insert into course_items (course_id, curiosity_id, position, is_preview) values
+    ('cccccccc-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000001', 1, true),
+    ('cccccccc-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000002', 2, false);
+
+  -- Nora le da like a la preview de Kit.
+  insert into interactions (user_id, curiosity_id, type)
+  values ('${NORA}', 'aaaaaaaa-0000-0000-0000-000000000001', 'like');
+`);
+
+await client.query(`grant select on all tables in schema public to anon, authenticated`);
+
+const anonFeed = await asUser(null, 'select * from feed_items');
+record(
+  'Sin sesión el feed se ve igualmente (la curiosidad es el motor de descubrimiento)',
+  anonFeed.rowCount === 3,
+  `${anonFeed.rowCount} publicaciones`
+);
+
+const anonLikes = anonFeed.rows.every((r) => r.liked_by_me === false);
+record('Sin sesión, nada aparece como "me gusta"', anonLikes);
+
+const noraFeed = await asUser(NORA, 'select * from feed_items order by created_at');
+const noraLiked = noraFeed.rows.filter((r) => r.liked_by_me);
+record(
+  'Nora ve su propio like y solo el suyo',
+  noraLiked.length === 1 && noraLiked[0].id === 'aaaaaaaa-0000-0000-0000-000000000001',
+  `${noraLiked.length} con like`
+);
+
+const samFeed = await asUser(SAM, 'select * from feed_items');
+record(
+  'Sam NO ve el like de Nora como suyo',
+  samFeed.rows.every((r) => r.liked_by_me === false)
+);
+
+const kitRow = noraFeed.rows.find((r) => r.author_id === KIT);
+record(
+  'El distintivo de verificado es visible para terceros',
+  kitRow?.author_is_verified === true,
+  `is_verified=${kitRow?.author_is_verified}`
+);
+
+const samRow = noraFeed.rows.find((r) => r.author_id === SAM);
+record(
+  'Y un autor sin verificar no lo lleva',
+  samRow?.author_is_verified === false,
+  `is_verified=${samRow?.author_is_verified}`
+);
+
+record(
+  'El curso de pago aparece bloqueado para quien no lo ha comprado',
+  kitRow?.course_id === 'cccccccc-0000-0000-0000-000000000001' &&
+    kitRow?.course_unlocked === false &&
+    kitRow?.course_price_cents === 1900,
+  `curso=${kitRow?.course_title} desbloqueado=${kitRow?.course_unlocked}`
+);
+
+record(
+  'Y trae el número real de lecciones',
+  Number(kitRow?.course_item_count) === 2,
+  `${kitRow?.course_item_count} lecciones`
+);
+
+// Nora compra el curso.
+await client.query(`
+  insert into entitlements (user_id, course_id, source)
+  values ('${NORA}', 'cccccccc-0000-0000-0000-000000000001', 'purchase');
+`);
+
+const noraAfter = await asUser(NORA, 'select * from feed_items');
+const kitAfter = noraAfter.rows.find((r) => r.author_id === KIT);
+record(
+  'Tras comprar, el curso aparece desbloqueado para ella',
+  kitAfter?.course_unlocked === true,
+  `desbloqueado=${kitAfter?.course_unlocked}`
+);
+
+const samAfter = await asUser(SAM, 'select * from feed_items');
+const kitForSam = samAfter.rows.find((r) => r.author_id === KIT);
+record(
+  'Pero sigue bloqueado para Sam, que no ha comprado nada',
+  kitForSam?.course_unlocked === false,
+  `desbloqueado=${kitForSam?.course_unlocked}`
+);
+
+// El paywall real: el media de la lección que no es preview.
+const samMedia = await asUser(
+  SAM,
+  `select id from media_assets where id = '44444444-4444-4444-4444-444444444444'`
+);
+record(
+  'PAYWALL: el vídeo de una lección de pago no se sirve a quien no tiene acceso',
+  samMedia.rowCount === 0,
+  samMedia.rowCount === 0 ? 'invisible para Sam' : 'SE ESTÁ SIRVIENDO — el paywall no protege nada'
+);
+
+const noraMedia = await asUser(
+  NORA,
+  `select id from media_assets where id = '44444444-4444-4444-4444-444444444444'`
+);
+record(
+  'Y sí a quien lo compró',
+  noraMedia.rowCount === 1,
+  noraMedia.rowCount === 1 ? 'visible para Nora' : 'no lo ve pese a haber pagado'
+);
+
+const anonPurchases = await asUser(null, 'select * from purchases');
+record(
+  'Las compras no se leen sin ser tuyas',
+  anonPurchases.rowCount === 0,
+  `${anonPurchases.rowCount} filas visibles`
 );
 
 console.log('\n========================================');

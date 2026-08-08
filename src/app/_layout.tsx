@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { SessionProvider } from '@/lib/session';
 import { colors } from '@/theme';
 
 // El splash nativo se mantiene hasta que la fuente del wordmark está lista: si se
@@ -26,14 +27,21 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <StatusBar style="light" />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.background },
-            animation: 'fade',
-          }}
-        />
+        <SessionProvider>
+          <StatusBar style="light" />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.background },
+              animation: 'fade',
+            }}>
+            {/* Entrar es una hoja modal: se pide cuando hace falta, no al abrir. */}
+            <Stack.Screen
+              name="sign-in"
+              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            />
+          </Stack>
+        </SessionProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
