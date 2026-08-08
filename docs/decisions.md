@@ -111,6 +111,36 @@ escribiendo; subes y se desescribe, sin una línea de código extra: es el mismo
 valor yendo hacia atrás. Se descartó una animación de duración fija porque
 bloqueaba la entrada al feed durante tres segundos en cada arranque.
 
+## La portada se genera, no se sube
+
+Cada publicación tiene portada aunque nadie la haya hecho:
+`src/components/cover/` dibuja una composición en SVG a partir del id, el título
+y el autor. Cuatro arquetipos —lockup, arco, numerado y sello— y el reparto es
+**determinista por id**: la misma publicación enseña siempre la misma portada.
+Si se sorteara, cambiaría en cada render, y una portada que baila no es una
+portada.
+
+Blanco y negro fijos, trazo de un punto, versalitas muy espaciadas: el idioma es
+el de una lámina técnica, no el de una miniatura de vídeo. Se dibuja en cliente
+porque así no cuesta ni una petición ni un byte de almacenamiento, y porque una
+publicación sin portada subida sigue teniendo algo que enseñar.
+
+**Sobre el origen.** La gramática viene de un pack de micrografías de Figma
+Community, pero **no hay un solo asset importado**: está todo redibujado. Los
+recursos de Community llevan licencia propia y las fuentes que traen dentro no se
+relicencian con la plantilla, así que nada de ese archivo viaja en la app. Lo que
+se toma prestado es el idioma visual, que no se licencia.
+
+Dos cosas que costó acertar y conviene no deshacer:
+
+- **El viewBox se estira a la proporción del hueco.** El lienzo de diseño es 9:16
+  y los móviles son más largos; con un viewBox fijo la lámina quedaba encajada
+  con franjas muertas arriba y abajo.
+- **`fitTitle` nunca recorta palabras.** El texto SVG no ajusta línea ni informa
+  de su ancho, así que el cuerpo se calcula a mano; la primera versión se comía
+  el final de las frases largas, que es peor que verse pequeño porque el
+  resultado parece correcto.
+
 ## Tres niveles de profundidad, un solo valor
 
 El feed no tiene "estados": tiene una profundidad continua, `depth`, que va de 0

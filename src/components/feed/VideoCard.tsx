@@ -1,7 +1,8 @@
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
+import { CoverComposition } from '@/components/cover/CoverComposition';
 import { colors } from '@/theme';
 import { VideoCuriosity } from '@/types/domain';
 
@@ -21,6 +22,8 @@ interface VideoCardProps {
  * por uno nativo — todo el texto vive en el panel que sube al tocar.
  */
 export function VideoCard({ curiosity, isActive, shouldLoad }: VideoCardProps) {
+  const { width, height } = useWindowDimensions();
+
   // El source es null fuera de la ventana de precarga: el reproductor existe pero
   // no descarga nada. Sin esto, un feed de 50 vídeos abre 50 conexiones.
   const player = useVideoPlayer(shouldLoad ? curiosity.videoUrl : null, (instance) => {
@@ -42,6 +45,20 @@ export function VideoCard({ curiosity, isActive, shouldLoad }: VideoCardProps) {
 
   return (
     <View style={styles.container}>
+      {/*
+        La portada va debajo del vídeo, no en su lugar. Ocupa el hueco mientras
+        el reel carga —que antes era un rectángulo negro— y desaparece detrás en
+        cuanto hay imagen. Una publicación siempre tiene algo que enseñar.
+      */}
+      <CoverComposition
+        id={curiosity.id}
+        title={curiosity.caption ?? curiosity.author.displayName}
+        meta={curiosity.author.handle}
+        width={width}
+        height={height}
+        polarity="dark"
+      />
+
       <VideoView
         style={StyleSheet.absoluteFill}
         player={player}
