@@ -3,7 +3,8 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
-    "@expo-google-fonts/dancing-script": "^0.4.2",
+    "@expo-google-fonts/ibm-plex-mono": "^0.4.1",
+    "@expo-google-fonts/special-gothic-expanded-one": "^0.4.0",
     "@expo/metro-runtime": "~57.0.8",
     "@expo/ui": "~57.0.9",
     "@expo/vector-icons": "^15.0.2",

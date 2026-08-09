@@ -72,6 +72,36 @@ El feed lee de `src/data/feedRepository.ts`, que sirve datos de prueba mientras 
 haya credenciales de Supabase. La app es demostrable el día uno y la pantalla no
 cambiará ni una línea cuando llegue el backend real.
 
+## El wordmark: de lettering dibujado a tipografía real
+
+Durante un tiempo el wordmark fueron curvas de Bézier dibujadas a mano, glifo a
+glifo, para poder animar un trazo que se escribiera de verdad. Se descartó por lo
+que era: **parecía pintado**. Ninguna cantidad de ajuste convierte unas
+letras dibujadas a ojo en tipografía.
+
+Ahora es **Special Gothic Expanded One**, una grotesca display muy ancha, siempre
+**en hueco** — contorno sin relleno, que es lo que le da el aire técnico. El
+eslogan va en **IBM Plex Mono**, la voz secundaria del sistema. Las dos son de
+Google Fonts con licencia OFL, así que se incrustan sin trámite.
+
+El wordmark es **`bi&hapia`**, en minúsculas y con ampersand. Es una decisión de
+marca, no un descuido: contradice el §5 del contexto original, que pedía una
+cursiva al estilo del "hello" de Apple. La dirección cambió a un lenguaje
+técnico y geométrico, y el §5 está desactualizado en ese punto.
+
+`RevealText` sustituye a todo el módulo `handwriting`, que desaparece. Dos cosas
+que hace y conviene no deshacer:
+
+- **No trocea el texto.** Se pinta de una pieza y se tapa con una máscara. Un
+  elemento por letra sería más fácil de animar, pero tiraría por la borda el
+  espaciado que la fuente calcula entre pares de caracteres.
+- **Cada letra se descubre en el primer 60 % de su turno y el resto es pausa.**
+  Esa pausa es exactamente lo que se percibe como "letra a letra"; sin ella el
+  resultado es un barrido continuo, que ya se había descartado.
+
+Va en SVG porque React Native no sabe dibujar texto en hueco, y el hueco es el
+wordmark.
+
 ## El splash se escribe, no aparece
 
 El wordmark **no es tipografía**. Es lettering de línea única dibujado a medida

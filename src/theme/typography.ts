@@ -1,17 +1,25 @@
 import { TextStyle } from 'react-native';
 
 /**
- * Tipografía — §5 del contexto.
+ * Tipografía.
  *
- * Dos familias y ninguna más:
- *  - El wordmark en Dancing Script (script/cursiva, estilo "hello" de Apple).
- *  - Todo lo demás en la fuente del sistema (San Francisco en iOS, Roboto en
- *    Android). No se carga ninguna fuente de UI a propósito: la del sistema es
- *    la que mejor consigue el aire Cupertino y no cuesta un solo byte.
+ * Tres familias y ninguna más:
+ *  - **Wordmark**: Special Gothic Expanded One, una grotesca display muy ancha,
+ *    que se usa siempre en hueco. Sustituye a la cursiva que planteaba el §5 del
+ *    contexto original: la dirección cambió a un lenguaje técnico y geométrico.
+ *  - **Mono**: IBM Plex Mono para el eslogan y los metadatos. Es la voz
+ *    secundaria del sistema — fina, técnica, de ficha.
+ *  - **UI**: la fuente del sistema (San Francisco en iOS, Roboto en Android).
+ *    No se carga nada a propósito: es la que mejor da el aire Cupertino y no
+ *    cuesta un solo byte.
+ *
+ * Las dos primeras son de Google Fonts con licencia OFL, así que se pueden
+ * incrustar en la app sin más trámite.
  */
 
 export const fonts = {
-  wordmark: 'DancingScript_700Bold',
+  wordmark: 'SpecialGothicExpandedOne_400Regular',
+  mono: 'IBMPlexMono_300Light',
 } as const;
 
 /**

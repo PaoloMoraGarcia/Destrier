@@ -1,4 +1,8 @@
-import { DancingScript_700Bold, useFonts } from '@expo-google-fonts/dancing-script';
+import { IBMPlexMono_300Light } from '@expo-google-fonts/ibm-plex-mono';
+import {
+  SpecialGothicExpandedOne_400Regular,
+  useFonts,
+} from '@expo-google-fonts/special-gothic-expanded-one';
 import { Stack } from 'expo-router';
 import * as NativeSplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -14,7 +18,7 @@ import { colors } from '@/theme';
 NativeSplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({ DancingScript_700Bold });
+  const [fontsLoaded, fontError] = useFonts({ SpecialGothicExpandedOne_400Regular, IBMPlexMono_300Light });
 
   useEffect(() => {
     if (fontsLoaded || fontError) {

@@ -42,10 +42,12 @@ permite trabajar en la interfaz sin backend.
 - **La primera vista de una publicación no lleva interfaz.** Ni iconos, ni
   nombre, ni contadores. Todo eso aparece al tocar. Si añades algo encima del
   contenido por defecto, estás rompiendo el §5.
-- **El wordmark no es una fuente.** Es lettering de línea única en
-  `src/components/handwriting/`. No lo sustituyas por texto con una tipografía
-  cursiva: una fuente da contornos cerrados y entonces la animación deja de ser
-  escritura y pasa a ser un barrido, que es justo lo que se descartó.
+- **El wordmark es `bi&hapia`**, en minúsculas y con ampersand, en Special
+  Gothic Expanded One y siempre **en hueco**. El §5 del contexto pide una
+  cursiva: está desactualizado, la dirección cambió a un lenguaje técnico.
+- **`RevealText` no trocea el texto.** Lo pinta de una pieza y lo tapa con una
+  máscara. Un elemento por letra rompería el espaciado entre pares que calcula
+  la fuente.
 - **El feed tiene tres niveles y un solo valor que los gobierna.** `depth` va de
   0 (contenido limpio) a 1 (caption) a 2 (ficha completa). No añadas estados
   paralelos: el caption y la ficha son valores derivados de `depth`.
