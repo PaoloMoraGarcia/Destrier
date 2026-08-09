@@ -1,11 +1,17 @@
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useEffect } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { CoverComposition } from '@/components/cover/CoverComposition';
 import { colors } from '@/theme';
 import { VideoCuriosity } from '@/types/domain';
 
+/**
+ * Los navegadores prohíben autoreproducir con sonido si el usuario no ha
+ * interactuado antes: el `play()` se rechaza y el reel se queda congelado. En
+ * web se arranca en silencio; en móvil el sonido es parte del formato.
+ *
+ */
 interface VideoCardProps {
   curiosity: VideoCuriosity;
   /** Es la tarjeta que ocupa la pantalla ahora mismo. */
@@ -28,11 +34,15 @@ export function VideoCard({ curiosity, isActive, shouldLoad }: VideoCardProps) {
   // no descarga nada. Sin esto, un feed de 50 vídeos abre 50 conexiones.
   const player = useVideoPlayer(shouldLoad ? curiosity.videoUrl : null, (instance) => {
     instance.loop = true;
-    instance.muted = false;
   });
 
   useEffect(() => {
     if (!shouldLoad) return;
+
+    // Los navegadores prohíben autoreproducir con sonido si el usuario no ha
+    // interactuado antes: el `play()` se rechaza y el reel se queda congelado.
+    // En web se arranca en silencio; en móvil el sonido es parte del formato.
+    player.muted = Platform.OS === 'web';
 
     if (isActive) {
       player.play();
@@ -60,7 +70,11 @@ export function VideoCard({ curiosity, isActive, shouldLoad }: VideoCardProps) {
       />
 
       <VideoView
-        style={StyleSheet.absoluteFill}
+        // En web el elemento <video> se queda con su tamaño natural —640×360 en
+        // los clips de prueba— aunque el contenedor esté posicionado a pantalla
+        // completa. Forzar el 100 % es lo que hace que `contentFit` sirva de
+        // algo: sin esto el reel sale encajado con la portada asomando debajo.
+        style={[StyleSheet.absoluteFill, styles.fill]}
         player={player}
         contentFit="cover"
         nativeControls={false}
@@ -80,5 +94,9 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: colors.background,
+  },
+  fill: {
+    width: '100%',
+    height: '100%',
   },
 });

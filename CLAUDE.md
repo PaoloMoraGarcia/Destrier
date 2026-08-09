@@ -32,6 +32,10 @@ permite trabajar en la interfaz sin backend.
 - `src/data/feedRepository.ts` — única puerta de entrada del feed a los datos.
 - `supabase/migrations/` — esquema y RLS. Ver `docs/data-model.md`.
 
+La app corre también en navegador. La estrategia web —qué superficies importan,
+por qué el estudio del creador será Next.js y no Expo web, y lo que aún no
+traduce bien— está en [docs/web.md](docs/web.md).
+
 ## Reglas que no se rompen
 
 - **La curiosidad es siempre gratis.** No añadas precio a `curiosities`, ni en la
@@ -68,6 +72,8 @@ permite trabajar en la interfaz sin backend.
   (guideline 3.1.1) y condiciona el margen. Ver [docs/app-store.md](docs/app-store.md).
 - **No añadas login social sin leer antes** `docs/app-store.md`: en cuanto haya
   Google o Facebook, Sign in with Apple pasa a ser obligatorio.
+- **Todo texto SVG declara `fontFamily`.** Un `<Text>` de React Native hereda la
+  del sistema; un texto SVG no, y en web cae al serif del navegador.
 
 ## Verificar un cambio
 

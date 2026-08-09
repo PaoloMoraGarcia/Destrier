@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { Platform } from 'react-native';
 import 'react-native-url-polyfill/auto';
 
 /**
@@ -24,8 +25,11 @@ export function getSupabase(): SupabaseClient | null {
         storage: AsyncStorage,
         autoRefreshToken: true,
         persistSession: true,
-        // React Native no tiene URL bar: no hay sesión que detectar en la URL.
-        detectSessionInUrl: false,
+        // En web el enlace del correo devuelve al usuario con el token en la
+        // URL, y hay que recogerlo de ahí o la sesión se pierde. En móvil no
+        // hay barra de direcciones y el token llega por el propio flujo, así
+        // que buscarlo en la URL no tiene sentido.
+        detectSessionInUrl: Platform.OS === 'web',
       },
     });
   }

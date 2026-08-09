@@ -39,6 +39,9 @@ Los cursos son contenido digital que se desbloquea dentro de la app, así que
 **obligan a usar IAP**. No se puede cobrar con Stripe ni enlazar fuera para
 comprar. El posicionamiento pagado del §3 es igual de digital, así que también.
 
+Vender en web esquiva esta comisión entera; el matiz de qué se puede enlazar
+desde dentro de la app está en [web.md](web.md).
+
 Comisión: **30 %**, o **15 %** con el App Store Small Business Program, para el
 que se cualifica por debajo de 1 M$ al año. Hay que solicitarlo, no es
 automático.

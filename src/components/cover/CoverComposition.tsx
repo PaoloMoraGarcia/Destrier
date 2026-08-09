@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, G, Line, Path, Rect, Text as SvgText, TextPath } from 'react-native-svg';
 
-import { colors } from '@/theme';
+import { colors, fonts } from '@/theme';
 
 import { archetypeFor, COVER_VIEWBOX, CoverArchetype, fitTitle, ordinalFor } from './archetypes';
 
@@ -59,7 +59,9 @@ export function CoverComposition({
         <Rect x={0} y={0} width={W} height={canvasHeight} fill={paper} />
         <CornerTicks ink={ink} canvasHeight={canvasHeight} />
 
-        <G translateY={shift}>
+        {/* `transform` y no `translateY`: la prop suelta se filtra al DOM en
+            web y React la rechaza. La forma larga funciona en las tres. */}
+        <G transform={`translate(0, ${shift})`}>
           {kind === 'lockup' && <Lockup ink={ink} title={title} meta={meta} id={id} />}
           {kind === 'arc' && <Arc ink={ink} title={title} meta={meta} />}
           {kind === 'numbered' && <Numbered ink={ink} title={title} meta={meta} id={id} />}
@@ -99,6 +101,7 @@ function MetaLine({ ink, text, y }: { ink: string; text: string; y: number }) {
       x={W / 2}
       y={y}
       fill={ink}
+      fontFamily={fonts.mono}
       fontSize={9}
       letterSpacing={3.4}
       textAnchor="middle"
@@ -134,6 +137,7 @@ function Lockup({
           x={W / 2}
           y={top + index * step}
           fill={ink}
+          fontFamily={fonts.uiStack}
           fontSize={fontSize}
           fontWeight="600"
           letterSpacing={-0.4}
@@ -172,6 +176,7 @@ function Arc({ ink, title, meta }: { ink: string; title: string; meta?: string }
           x={W / 2}
           y={top + index * step}
           fill={ink}
+          fontFamily={fonts.uiStack}
           fontSize={fontSize}
           fontWeight="600"
           letterSpacing={-0.2}
@@ -218,6 +223,7 @@ function Numbered({
         x={W / 2}
         y={288}
         fill={ink}
+        fontFamily={fonts.uiStack}
         fontSize={118}
         fontWeight="700"
         letterSpacing={-4}
@@ -233,6 +239,7 @@ function Numbered({
           x={W / 2}
           y={352 + index * step}
           fill={ink}
+          fontFamily={fonts.uiStack}
           fontSize={fontSize}
           fontWeight="500"
           textAnchor="middle">
@@ -265,7 +272,7 @@ function Seal({ ink, title, meta }: { ink: string; title: string; meta?: string 
       <Circle cx={cx} cy={cy} r={118} stroke={ink} strokeWidth={1} fill="none" />
       <Circle cx={cx} cy={cy} r={104} stroke={ink} strokeWidth={1} fill="none" opacity={0.45} />
 
-      <SvgText fill={ink} fontSize={9} letterSpacing={4.6} opacity={0.75}>
+      <SvgText fill={ink} fontFamily={fonts.mono} fontSize={9} letterSpacing={4.6} opacity={0.75}>
         <TextPath href="#sealPath" startOffset="0%">
           {(meta ?? 'Bihapia').toUpperCase()}
         </TextPath>
@@ -291,6 +298,7 @@ function Seal({ ink, title, meta }: { ink: string; title: string; meta?: string 
           x={cx}
           y={cy - ((lines.length - 1) * step) / 2 + index * step}
           fill={ink}
+          fontFamily={fonts.uiStack}
           fontSize={fontSize}
           fontWeight="600"
           textAnchor="middle">

@@ -1,4 +1,4 @@
-import { TextStyle } from 'react-native';
+import { Platform, TextStyle } from 'react-native';
 
 /**
  * Tipografía.
@@ -20,6 +20,18 @@ import { TextStyle } from 'react-native';
 export const fonts = {
   wordmark: 'SpecialGothicExpandedOne_400Regular',
   mono: 'IBMPlexMono_300Light',
+
+  /**
+   * La fuente del sistema, escrita a mano para SVG.
+   *
+   * Un `<Text>` de React Native hereda la del sistema si no se dice nada, pero
+   * un texto SVG **no**: en web cae al serif del navegador. Cualquier texto que
+   * se dibuje en SVG tiene que declarar familia explícitamente.
+   */
+  uiStack: Platform.select({
+    web: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    default: 'System',
+  }) as string,
 } as const;
 
 /**
