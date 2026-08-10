@@ -1,0 +1,51 @@
+@import 'tailwindcss';
+
+/*
+ * Bihapia Studio.
+ *
+ * Deliberadamente lo contrario de la app: la app es negra y esconde su interfaz
+ * hasta que la tocas; el panel es claro y enseña sus datos de golpe. Quien entra
+ * aquí viene a trabajar, no a descubrir.
+ *
+ * La separación entre cabecera y cuerpo —que es lo que se pidió— la hace el
+ * contraste entre el blanco de la cabecera y el gris del lienzo. Con todo
+ * blanco no se separa nada; hace falta que el fondo sea más oscuro que las
+ * tarjetas que van encima.
+ */
+
+@theme {
+  /* Superficies */
+  --color-canvas: #f0f0ec;
+  --color-surface: #ffffff;
+  --color-line: #e3e3df;
+  --color-line-soft: #eeeeea;
+
+  /* Tinta */
+  --color-ink: #0a0a0a;
+  --color-ink-soft: #5f5f59;
+  --color-ink-faint: #8f8f88;
+
+  /* El único acento de la marca. */
+  --color-amber: #f5a623;
+  --color-amber-soft: #fff4e0;
+
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --font-wordmark: var(--font-gothic), sans-serif;
+}
+
+html,
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+/*
+ * El wordmark va en hueco, como en la app. En web basta con vaciar el relleno y
+ * pedir un contorno; no hace falta SVG.
+ */
+.wordmark {
+  font-family: var(--font-wordmark);
+  color: transparent;
+  -webkit-text-stroke: 1.4px var(--color-ink);
+  letter-spacing: -0.01em;
+}

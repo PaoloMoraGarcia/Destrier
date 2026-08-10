@@ -135,6 +135,7 @@ for (const file of [
   '0003_video_caption.sql',
   '0004_profile_on_signup.sql',
   '0005_feed_view.sql',
+  '0006_creator_analytics.sql',
 ]) {
   try {
     await client.query(readFileSync(`${MIGRATIONS}/${file}`, 'utf8'));
@@ -489,6 +490,100 @@ record(
   'Las compras no se leen sin ser tuyas',
   anonPurchases.rowCount === 0,
   `${anonPurchases.rowCount} filas visibles`
+);
+
+console.log('\n=== 9. Los datos que el creador ve de sí mismo ===');
+
+// Nora sigue a Kit, y ya le compró el curso en la sección anterior.
+await client.query(`
+  insert into follows (follower_id, followee_id) values ('${NORA}', '${KIT}');
+  update purchases set status = 'completed' where course_id = 'cccccccc-0000-0000-0000-000000000001';
+`);
+
+// Si no hay compra registrada de la sección 8, se crea aquí para poder medir.
+await client.query(`
+  insert into purchases (buyer_id, course_id, amount_cents, currency, platform, provider_txn_id, status)
+  values ('${NORA}', 'cccccccc-0000-0000-0000-000000000001', 1900, 'USD', 'ios', 'txn-test-1', 'completed')
+  on conflict do nothing;
+
+  -- Y una vista sobre contenido de Kit, para que el recuento no sea trivial.
+  insert into interactions (user_id, curiosity_id, type)
+  values ('${SAM}', 'aaaaaaaa-0000-0000-0000-000000000001', 'view_complete')
+  on conflict do nothing;
+`);
+
+const kitTotals = await asUser(KIT, 'select * from creator_totals()');
+const kit = kitTotals.rows[0];
+record(
+  'Kit ve sus propias ventas, que RLS le esconde fila a fila',
+  Number(kit.revenue_cents) === 1900,
+  `ingresos=${kit.revenue_cents} centavos`
+);
+record(
+  'Y las vistas de su contenido, que tampoco puede leer fila a fila',
+  Number(kit.views) === 1,
+  `vistas=${kit.views}`
+);
+record(
+  'Y su número de seguidores',
+  Number(kit.followers) === 1,
+  `seguidores=${kit.followers}`
+);
+// Kit publicó dos a lo largo del test: el de la sección 4 y el de la 8.
+record(
+  'Y sus cursos publicados',
+  Number(kit.published_courses) === 2,
+  `cursos=${kit.published_courses}`
+);
+
+// Lo que de verdad importa: que sean SUS datos y no los de cualquiera.
+const samTotals = await asUser(SAM, 'select * from creator_totals()');
+const sam = samTotals.rows[0];
+record(
+  'AISLAMIENTO: Sam no ve ni un céntimo de los ingresos de Kit',
+  Number(sam.revenue_cents) === 0,
+  Number(sam.revenue_cents) === 0
+    ? 'sus ingresos salen a cero'
+    : `LE ESTÁ VIENDO ${sam.revenue_cents} — la función filtra datos ajenos`
+);
+record(
+  'Ni sus vistas',
+  Number(sam.views) === 0,
+  `vistas=${sam.views}`
+);
+
+const anonTotals = await asUser(null, 'select * from creator_totals()');
+record(
+  'Sin sesión no hay datos de nadie',
+  Number(anonTotals.rows[0].revenue_cents) === 0 && Number(anonTotals.rows[0].followers) === 0,
+  'todo a cero'
+);
+
+// La serie diaria: los días sin actividad tienen que existir y valer cero, o el
+// gráfico dibujaría una curva con la forma equivocada.
+const serie = await asUser(
+  KIT,
+  `select * from creator_daily((current_date - 6), current_date)`
+);
+record(
+  'La serie diaria devuelve todos los días del rango, también los vacíos',
+  serie.rowCount === 7,
+  `${serie.rowCount} días`
+);
+record(
+  'Y la suma de la serie cuadra con el total',
+  serie.rows.reduce((sum, row) => sum + Number(row.revenue_cents), 0) === 1900,
+  `suma=${serie.rows.reduce((sum, row) => sum + Number(row.revenue_cents), 0)}`
+);
+
+const serieSam = await asUser(
+  SAM,
+  `select coalesce(sum(revenue_cents),0)::bigint as total from creator_daily((current_date - 6), current_date)`
+);
+record(
+  'AISLAMIENTO: la serie de Sam tampoco trae nada de Kit',
+  Number(serieSam.rows[0].total) === 0,
+  `suma=${serieSam.rows[0].total}`
 );
 
 console.log('\n========================================');

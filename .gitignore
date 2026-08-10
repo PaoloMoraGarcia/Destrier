@@ -48,3 +48,8 @@ supabase/tests/.pgdata/
 # Bundler local (CocoaPods)
 vendor/bundle/
 .bundle/
+
+# Panel de creador (proyecto Next.js propio)
+studio/node_modules/
+studio/.next/
+studio/out/

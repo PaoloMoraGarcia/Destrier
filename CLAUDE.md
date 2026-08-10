@@ -32,9 +32,12 @@ permite trabajar en la interfaz sin backend.
 - `src/data/feedRepository.ts` — única puerta de entrada del feed a los datos.
 - `supabase/migrations/` — esquema y RLS. Ver `docs/data-model.md`.
 
-La app corre también en navegador. La estrategia web —qué superficies importan,
-por qué el estudio del creador será Next.js y no Expo web, y lo que aún no
-traduce bien— está en [docs/web.md](docs/web.md).
+- `studio/` — **el panel del creador**, un proyecto Next.js aparte con su propio
+  `package.json`. Metro lo ignora por `metro.config.js`, y el `tsconfig` de la
+  app lo excluye: son dos proyectos que comparten repo y base de datos, nada más.
+  Se arranca con `npm --prefix studio run dev`.
+
+La estrategia web está en [docs/web.md](docs/web.md).
 
 ## Reglas que no se rompen
 
@@ -58,9 +61,14 @@ traduce bien— está en [docs/web.md](docs/web.md).
 - **Del tap no sale nada desde abajo.** En un reel se abre una hoja blanca desde
   el centro con el caption; en una entradilla de texto solo aparece la firma. Si
   vuelves a montar un panel inferior, estás deshaciendo una decisión tomada.
-- **Sin contadores en ningún sitio.** La ficha tiene botones que cambian de color,
-  no números. Enseñar cuánta gente ha dado a "me gusta" es la comparación social
-  que el producto existe para evitar.
+- **Sin contadores en la app.** La ficha tiene botones que cambian de color, no
+  números. Enseñar cuánta gente ha dado a "me gusta" es la comparación social que
+  el producto existe para evitar. **La regla es del consumidor, no del creador**:
+  el panel de `studio/` es todo cifras, y así debe ser.
+- **El creador ve cuántos, nunca quiénes.** Sus datos salen de las funciones
+  agregadas de `0006_creator_analytics.sql`. No abras las policies de
+  `purchases` ni de `interactions` para que le cuadren los números: eso expondría
+  el rastro de cada persona.
 - **El caption nunca va quemado en el vídeo.** Es un campo de `curiosities` que
   pinta la app, para que sea moderable, traducible y accesible.
 - **Nada escribe en `purchases` desde el cliente.** Eso lo hace el webhook del

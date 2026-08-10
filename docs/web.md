@@ -8,15 +8,22 @@ Pero "web" son **tres productos distintos**, y confundirlos es el error caro.
 
 ## Las tres superficies
 
-### 1. Estudio del creador — la que importa
+### 1. Estudio del creador — **en construcción, en `studio/`**
 
 Subir vídeo, montar y ordenar cursos, escribir, ver ingresos, pasar la
 verificación. Es un producto de escritorio: formularios, tablas, arrastrar para
 reordenar, subida de archivos grandes.
 
-**No debería ser Expo web.** Con primitivas de React Native, un formulario largo
-o una tabla ordenable se sufren, y se acaba peleando contra la herramienta. El
-estudio será un proyecto **Next.js aparte**.
+**No debía ser Expo web**, y no lo es: vive en `studio/` como proyecto Next.js
+con Tailwind, `@supabase/ssr` y Recharts. Comparte repo y base de datos con la
+app, y nada más.
+
+Estéticamente es lo contrario de la app: cabecera blanca con el wordmark en
+hueco, navegación lateral, y un lienzo gris con tarjetas blancas. Ese contraste
+es lo que separa la cabecera del cuerpo — con todo blanco no se separa nada.
+
+Hecho: el armazón, la estética y el resumen leyendo datos reales.
+Pendiente: gestión de cursos, subida de vídeo y perfil.
 
 ### 2. Páginas públicas de curso y perfil — la de más palanca
 
@@ -43,11 +50,11 @@ llevan años moviéndose por litigios y regulación.
 **Esto hay que verificarlo con la política vigente antes de apostar el modelo a
 ello.** Queda escrito como oportunidad, no como hecho establecido.
 
-## Arquitectura acordada
+## Arquitectura
 
-**Expo web ahora, Next.js después.** Hoy la app corre en navegador y no está
-rota; el estudio y las páginas públicas se abren como proyecto propio cuando
-toque.
+Dos proyectos en el mismo repositorio: la app Expo en la raíz y el panel en
+`studio/`. Metro ignora `studio/` por `metro.config.js` y el `tsconfig` de la app
+lo excluye, así que cada uno compila por su cuenta.
 
 Lo que hace barato ese segundo frente ya está hecho: **el esquema de Supabase con
 RLS es el contrato compartido**. Ambos proyectos hablan con la misma base, con
@@ -94,13 +101,20 @@ Cuatro cosas que solo se rompían en navegador y que ya están arregladas:
 
 ## Lo que le falta al esquema para el estudio
 
-Cuando el estudio empiece, esto es lo que no existe todavía:
+**Resuelto:** el creador no podía ver sus propios datos. `purchases` solo lo lee
+el comprador e `interactions` solo quien interactúa, así que ni las ventas ni las
+vistas le eran visibles. Se arregló con agregados `security definer` en
+`0006_creator_analytics.sql` — **cuántos, nunca quiénes** — en lugar de abrir las
+policies, que habría expuesto el rastro de cada persona. Bajo test en la sección
+9 de `schema.test.mjs`, incluido que un creador no ve los datos de otro.
+
+**Pendiente:**
 
 - **Subida de media.** Nada escribe en `media_assets` ni sube ficheros; el bucket
   de Storage no está creado ni tiene políticas.
 - **Edición de cursos.** Las policies dejan al autor gestionar sus cursos y
   `course_items`, pero no hay ninguna interfaz ni flujo de reordenación.
-- **Ingresos.** No hay ninguna vista que agregue `purchases` por creador, ni nada
-  de liquidaciones.
+- **Liquidaciones.** Los ingresos ya se pueden leer, pero no hay nada para pagar
+  al creador.
 - **Verificación.** `creator_verifications` existe y el trigger bloquea el cobro
   sin ella, pero no hay flujo para solicitarla ni para revisarla.
