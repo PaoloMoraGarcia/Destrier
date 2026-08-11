@@ -122,7 +122,12 @@ function toLesson(item: {
  * etiquetada, porque un editor de diseño vacío no se puede ni evaluar.
  */
 export async function loadEditorState(): Promise<EditorState> {
-  const demo: EditorState = { saveable: false, landing: DEMO_LANDING, course: DEMO_COURSE };
+  const demo: EditorState = {
+    saveable: false,
+    courseId: '',
+    landing: DEMO_LANDING,
+    course: DEMO_COURSE,
+  };
 
   const supabase = await createClient();
   if (!supabase || !isConfigured) return demo;
@@ -156,6 +161,7 @@ export async function loadEditorState(): Promise<EditorState> {
 
   return {
     saveable: true,
+    courseId: course.id,
     landing: landing
       ? {
           theme: landing.theme as LandingTheme,

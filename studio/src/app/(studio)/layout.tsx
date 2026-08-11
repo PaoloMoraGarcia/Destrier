@@ -1,6 +1,8 @@
+import { redirect } from 'next/navigation';
+
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
-import { createClient } from '@/lib/supabase';
+import { createClient, isConfigured } from '@/lib/supabase';
 
 /** El armazón del panel: cabecera blanca, navegación lateral y lienzo gris. */
 export default async function StudioLayout({ children }: { children: React.ReactNode }) {
@@ -8,6 +10,14 @@ export default async function StudioLayout({ children }: { children: React.React
   const {
     data: { user },
   } = (await supabase?.auth.getUser()) ?? { data: { user: null } };
+
+  // Sin sesión no hay panel: no tiene nada que enseñar a quien no ha entrado.
+  //
+  // Pero solo si hay configuración. Sin `.env.local` no existe sesión posible ni
+  // nada a lo que entrar, así que redirigir dejaría el panel inalcanzable y
+  // mataría el camino de la muestra — que es justo lo que permite trabajar el
+  // diseño sin backend, y lo que `CLAUDE.md` dice que no se puede romper.
+  if (isConfigured && !user) redirect('/entrar');
 
   return (
     <>

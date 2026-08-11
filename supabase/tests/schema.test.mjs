@@ -712,6 +712,85 @@ record(
   stillKit.rows[0].promise
 );
 
+// El otro lado de la policy. Lo de arriba prueba el `using`: Sam no puede
+// modificar lo que ya existe. Esto prueba el `with check`, que es una cláusula
+// distinta y se puede escribir mal por separado: que tampoco pueda **crear** un
+// escaparate para un curso ajeno, ni ponerle dirección al curso de otro. Sin
+// esto, secuestrar la URL pública de alguien sería cuestión de llegar antes.
+// Un curso de Kit **sin escaparate todavía**, para que la única razón posible de
+// que el insert no entre sea la policy. Con uno que ya tuviera fila, la clave
+// primaria bastaría para rechazarlo y el test pasaría sin probar nada.
+await client.query(`
+  insert into courses (id, author_id, category_slug, title, pricing_mode, status, slug)
+  values ('cccccccc-0000-0000-0000-00000000000a', '${KIT}', 'tech-web',
+          'Sin escaparate', 'free', 'published', 'sin-escaparate');
+`);
+
+const forgedLanding = await asUser(
+  SAM,
+  `insert into course_landings (course_id, theme, cta_label)
+   values ('cccccccc-0000-0000-0000-00000000000a', 'papel', 'Robado')`
+).catch((error) => ({ rowCount: -1, message: error.message.split('\n')[0] }));
+
+const forgedCount = await client.query(
+  `select count(*)::int as n from course_landings
+   where course_id = 'cccccccc-0000-0000-0000-00000000000a'`
+);
+record(
+  'WITH CHECK: Sam no puede crear un escaparate para un curso de Kit',
+  forgedCount.rows[0].n === 0,
+  forgedCount.rows[0].n === 0
+    ? `rechazado: ${forgedLanding.message ?? 'sin filas'}`
+    : 'HA CREADO el escaparate de un curso ajeno'
+);
+
+// Y que la policy deja crearlo a quien sí es su dueño, o el caso de arriba
+// pasaría igual con una policy que lo prohibiera todo.
+const ownInsert = await asUser(
+  KIT,
+  `insert into course_landings (course_id, theme, cta_label)
+   values ('cccccccc-0000-0000-0000-00000000000a', 'papel', 'Empezar')`
+).catch((error) => ({ rowCount: -1, message: error.message.split('\n')[0] }));
+record(
+  'Y Kit sí puede crear el suyo',
+  ownInsert.rowCount === 1,
+  ownInsert.rowCount === 1 ? 'creado' : `rechazado: ${ownInsert.message}`
+);
+
+const forgedSlug = await asUser(
+  SAM,
+  `update courses set slug = 'secuestrado'
+   where id = 'cccccccc-0000-0000-0000-000000000001'`
+);
+record(
+  'Ni ponerle dirección al curso de otro',
+  forgedSlug.rowCount === 0,
+  forgedSlug.rowCount === 0
+    ? 'la policy no le deja tocar ni una fila'
+    : `HA CAMBIADO la URL de ${forgedSlug.rowCount} curso(s) ajeno(s)`
+);
+
+const untouched = await client.query(
+  `select slug from courses where id = 'cccccccc-0000-0000-0000-000000000001'`
+);
+record(
+  'Y la dirección de Kit sigue siendo la suya',
+  untouched.rows[0].slug === 'ship-en-siete-dias',
+  untouched.rows[0].slug
+);
+
+// Y que el autor sí pueda, que es la mitad que de nada sirve romper.
+const own = await asUser(
+  KIT,
+  `update course_landings set promise = 'Escrito por su autor'
+   where course_id = 'cccccccc-0000-0000-0000-000000000001'`
+);
+record(
+  'Kit sí escribe en el suyo',
+  own.rowCount === 1,
+  `${own.rowCount} fila actualizada`
+);
+
 await expectFailure(
   client,
   'Los bloques tienen que ser una lista, no un objeto suelto',

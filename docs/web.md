@@ -36,9 +36,20 @@ de tres temas. **La vista previa es el mismo componente que la página pública*
 no una imitación — cualquier copia se separa de la realidad al segundo cambio.
 
 Hecho: el modelo (`0007_course_landing.sql`), los ocho bloques, los tres temas,
-el editor y la ruta pública con sus metadatos.
+el editor con guardado y dirección, y la ruta pública con sus metadatos.
 Pendiente: el cobro, la portada (depende de la subida de media) y el perfil
 público del creador.
+
+**Guardar es explícito, con botón.** Nada de autoguardado: la página es pública,
+y no puede ir cambiando a cada tecla mientras alguien la está leyendo. Lo hace
+`saveLanding` en `lib/landing.actions.ts`, que escribe el escaparate y la
+dirección y revalida la ruta pública —sin eso el creador vería su cambio en el
+editor pero no al abrir su propio enlace—.
+
+La acción **no comprueba de quién es el curso**. Eso lo deciden las policies de
+`0007` con la sesión que viaja en la cookie; repetirlo en el servidor daría dos
+sitios donde equivocarse. Lo que sí valida es la forma del texto, y solo para
+devolver un mensaje legible en vez del error crudo de Postgres.
 
 #### Qué se tomó de Skool y qué no
 
@@ -67,6 +78,41 @@ paywall de `0002_rls.sql` ya servía sin tocar una sola policy.
 
 Nadie hace scroll de Reels en un portátil como hábito. Y un vertical a pantalla
 completa en un monitor 16:9 se ve mal. Funciona hoy, pero no es una prioridad.
+
+## Cómo se entra
+
+Correo y código de seis cifras, el mismo flujo que la app (`src/lib/session.tsx`).
+Comparten proyecto de Supabase, así que es literalmente la misma cuenta.
+
+**Sin login social, y es deliberado**: `app-store.md` deja escrito que en cuanto
+exista Google o Facebook, Sign in with Apple pasa a ser obligatorio en iOS.
+
+Va por **Server Actions** (`lib/auth.actions.ts`) y no por un cliente de
+navegador: en una acción sí se pueden escribir cookies, así que el `createClient()`
+que ya existía sirve tal cual y no hay un segundo cliente que mantener en
+sintonía.
+
+`middleware.ts` refresca el token en cada petición. **No es opcional**: dura una
+hora y un Server Component no puede reescribir cookies, así que sin él la sesión
+se caería sola y no habría forma de recuperarla salvo volviendo a entrar.
+
+Sin sesión, el panel redirige a `/entrar` — pero **solo si hay configuración**.
+Sin `.env.local` no hay nada a lo que entrar, y redirigir dejaría el panel
+inalcanzable y mataría el camino de la muestra.
+
+### Todavía sin comprobar
+
+Sin proyecto de Supabase no se ha podido ejecutar el ciclo real: que llegue el
+correo con el código, que la sesión se cree y se refresque, que el `upsert`
+escriba y que la página pública refleje lo guardado. El código está y compila, y
+las policies que lo protegen sí están probadas contra un Postgres real en la
+sección 10 de `schema.test.mjs` — pero el camino de ida y vuelta está **pendiente
+de comprobar**, no dado por bueno.
+
+Hace falta un proyecto en supabase.com y dos archivos, cada uno copiado de su
+`.env.example`: `.env.local` en la raíz con `EXPO_PUBLIC_SUPABASE_URL` y
+`EXPO_PUBLIC_SUPABASE_ANON_KEY`, y `studio/.env.local` con
+`NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
 ## Por qué la web toca al dinero
 

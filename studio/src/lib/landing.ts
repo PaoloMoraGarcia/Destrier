@@ -172,6 +172,8 @@ export const DEFAULT_LANDING: Landing = {
 export interface EditorState {
   /** Con `false` se puede componer y mirar, pero no guardar. */
   saveable: boolean;
+  /** Vacío en la muestra: no hay curso real al que escribir. */
+  courseId: string;
   landing: Landing;
   course: CourseData;
 }

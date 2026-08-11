@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 
 import { Landing } from './Landing';
+import { saveLanding } from '@/lib/landing.actions';
 import type { Block, BlockType, EditorState, Landing as LandingData, LandingTheme } from '@/lib/landing';
 import { BLOCK_INFO, BLOCK_ORDER, THEMES, emptyBlock } from '@/lib/landing';
 
@@ -15,23 +16,42 @@ import { BLOCK_INFO, BLOCK_ORDER, THEMES, emptyBlock } from '@/lib/landing';
  */
 export function Editor({ initial }: { initial: EditorState }) {
   const [landing, setLanding] = useState<LandingData>(initial.landing);
-  const { course, saveable } = initial;
+  const [slug, setSlug] = useState(initial.course.slug);
+  const [dirty, setDirty] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  const { course, saveable, courseId } = initial;
 
   const active = new Set(landing.blocks.map((block) => block.type));
 
+  /** Todo cambio pasa por aquí, para que ninguno se olvide de marcar pendiente. */
+  function mutate(next: (current: LandingData) => LandingData) {
+    setDirty(true);
+    setLanding(next);
+  }
+
   function update(patch: Partial<LandingData>) {
-    setLanding((current) => ({ ...current, ...patch }));
+    mutate((current) => ({ ...current, ...patch }));
+  }
+
+  function save() {
+    setError(null);
+    start(async () => {
+      const result = await saveLanding(courseId, landing, slug);
+      if (result.error) setError(result.error);
+      else setDirty(false);
+    });
   }
 
   function setBlock(index: number, block: Block) {
-    setLanding((current) => ({
+    mutate((current) => ({
       ...current,
       blocks: current.blocks.map((item, i) => (i === index ? block : item)),
     }));
   }
 
   function toggle(type: BlockType) {
-    setLanding((current) =>
+    mutate((current) =>
       active.has(type)
         ? { ...current, blocks: current.blocks.filter((block) => block.type !== type) }
         : { ...current, blocks: [...current.blocks, emptyBlock(type)] }
@@ -42,7 +62,7 @@ export function Editor({ initial }: { initial: EditorState }) {
     const target = index + delta;
     if (target < 0 || target >= landing.blocks.length) return;
 
-    setLanding((current) => {
+    mutate((current) => {
       const blocks = [...current.blocks];
       [blocks[index], blocks[target]] = [blocks[target], blocks[index]];
       return { ...current, blocks };
@@ -57,6 +77,29 @@ export function Editor({ initial }: { initial: EditorState }) {
             <strong className="font-medium text-ink">Estás viendo un curso de muestra.</strong>{' '}
             Puedes componer y mirar cómo queda, pero no se guarda: falta conectar
             Supabase o iniciar sesión.
+          </p>
+        )}
+
+        {/*
+          Guardar es explícito, no automático. Una página de venta es pública: no
+          puede ir cambiando a cada tecla mientras alguien la está leyendo.
+        */}
+        <div className="sticky top-0 z-10 -mx-1 flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3">
+          <span className="flex-1 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
+            {pending ? 'Guardando…' : dirty ? 'Sin guardar' : 'Al día'}
+          </span>
+          <button
+            type="button"
+            onClick={save}
+            disabled={!saveable || !dirty || pending}
+            className="rounded-lg bg-ink px-4 py-2 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-30">
+            Guardar
+          </button>
+        </div>
+
+        {error && (
+          <p className="rounded-xl border border-line bg-surface px-4 py-3 text-xs leading-relaxed text-ink">
+            {error}
           </p>
         )}
 
@@ -83,6 +126,42 @@ export function Editor({ initial }: { initial: EditorState }) {
               </button>
             ))}
           </div>
+        </Panel>
+
+        <Panel title="Dirección">
+          <label className="block">
+            <span className="mb-1.5 block text-xs text-ink-soft">
+              Dónde vive tu página
+            </span>
+            <div className="flex items-center rounded-lg border border-line bg-canvas px-3 py-2 focus-within:border-ink">
+              <span className="shrink-0 font-mono text-xs text-ink-faint">
+                /{course.handle || 'tu-nombre'}/
+              </span>
+              <input
+                value={slug}
+                maxLength={60}
+                placeholder="nombre-del-curso"
+                onChange={(event) => {
+                  setDirty(true);
+                  setSlug(event.target.value);
+                }}
+                className="w-full bg-transparent font-mono text-xs text-ink outline-none placeholder:text-ink-faint"
+              />
+            </div>
+            <span className="mt-1 block text-[11px] text-ink-faint">
+              Minúsculas, números y guiones. Sin esto la página no tiene URL.
+            </span>
+          </label>
+
+          {slug && course.handle && (
+            <a
+              href={`/${course.handle}/${slug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-block text-xs text-ink underline underline-offset-2">
+              Ver publicada ↗
+            </a>
+          )}
         </Panel>
 
         <Panel title="Portada">

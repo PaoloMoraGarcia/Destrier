@@ -88,7 +88,19 @@ La estrategia web está en [docs/web.md](docs/web.md).
 - **Los cursos se cobran con IAP, no con Stripe.** Es obligatorio en iOS
   (guideline 3.1.1) y condiciona el margen. Ver [docs/app-store.md](docs/app-store.md).
 - **No añadas login social sin leer antes** `docs/app-store.md`: en cuanto haya
-  Google o Facebook, Sign in with Apple pasa a ser obligatorio.
+  Google o Facebook, Sign in with Apple pasa a ser obligatorio. La app y el panel
+  entran igual, con **código de seis cifras al correo**, y así debe seguir.
+- **La sesión del panel va por cookies y Server Actions.** `studio/` no usa el
+  cliente de la app: `lib/supabase.ts` con `@supabase/ssr`, y `middleware.ts`
+  para refrescar el token —que dura una hora y que un Server Component no puede
+  reescribir—. No metas un cliente de navegador en paralelo.
+- **El panel manda a entrar, salvo sin configuración.** `(studio)/layout.tsx`
+  redirige a `/entrar` si no hay sesión, pero **solo si `isConfigured`**. Sin
+  `.env.local` no hay nada a lo que entrar, y redirigir dejaría el panel
+  inalcanzable y mataría el camino de la muestra.
+- **Las acciones del panel no comprueban de quién es cada cosa.** Eso lo deciden
+  las policies con la sesión de la cookie. Duplicar la comprobación en el
+  servidor da dos sitios donde equivocarse, y el que manda no sería ese.
 - **Todo texto SVG declara `fontFamily`.** Un `<Text>` de React Native hereda la
   del sistema; un texto SVG no, y en web cae al serif del navegador.
 
