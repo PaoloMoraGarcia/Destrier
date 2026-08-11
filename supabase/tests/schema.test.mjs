@@ -136,6 +136,7 @@ for (const file of [
   '0004_profile_on_signup.sql',
   '0005_feed_view.sql',
   '0006_creator_analytics.sql',
+  '0007_course_landing.sql',
 ]) {
   try {
     await client.query(readFileSync(`${MIGRATIONS}/${file}`, 'utf8'));
@@ -388,7 +389,17 @@ await client.query(`
   values ('${NORA}', 'aaaaaaaa-0000-0000-0000-000000000001', 'like');
 `);
 
-await client.query(`grant select on all tables in schema public to anon, authenticated`);
+// Los permisos de tabla que Supabase concede de serie a sus dos roles.
+//
+// Hay que darlos, y en particular los de escritura: RLS solo filtra **después**
+// del permiso, así que sin `grant insert/update/delete` cualquier intento de
+// escribir falla con "permission denied" y el test daría por buena la policy sin
+// haberla ejecutado. En Supabase el permiso sí está, y entonces la policy es lo
+// único que separa a un creador de reescribir la página de venta de otro.
+await client.query(`
+  grant select on all tables in schema public to anon, authenticated;
+  grant insert, update, delete on all tables in schema public to authenticated;
+`);
 
 const anonFeed = await asUser(null, 'select * from feed_items');
 record(
@@ -584,6 +595,162 @@ record(
   'AISLAMIENTO: la serie de Sam tampoco trae nada de Kit',
   Number(serieSam.rows[0].total) === 0,
   `suma=${serieSam.rows[0].total}`
+);
+
+console.log('\n=== 10. La página de venta (0007) ===');
+
+// El slug es lo que hace pública una URL, así que lo que no puede pasar es que
+// dos cursos del mismo autor apunten al mismo sitio, o que se cuele un slug con
+// mayúsculas o espacios y produzca una URL que no se puede compartir.
+
+await expectSuccess(
+  client,
+  'Un slug normal se acepta',
+  `update courses set slug = 'ship-en-siete-dias'
+   where id = 'cccccccc-0000-0000-0000-000000000001'`
+);
+
+await expectFailure(
+  client,
+  'Un slug con mayúsculas se rechaza',
+  `update courses set slug = 'Ship-En-Siete-Dias'
+   where id = 'cccccccc-0000-0000-0000-000000000001'`,
+  'slug_shape'
+);
+
+await expectFailure(
+  client,
+  'Y uno con espacios también',
+  `update courses set slug = 'ship en siete dias'
+   where id = 'cccccccc-0000-0000-0000-000000000001'`,
+  'slug_shape'
+);
+
+// El curso en borrador que hace falta para probar que el escaparate de lo no
+// publicado no se ve. Kit está verificado, así que puede tener precio.
+await client.query(`
+  insert into courses (id, author_id, category_slug, title, pricing_mode, price_cents, status, slug)
+  values ('cccccccc-0000-0000-0000-000000000009', '${KIT}', 'tech-web',
+          'Todavía sin publicar', 'one_time', 2900, 'draft', 'todavia-sin-publicar');
+`);
+
+await expectFailure(
+  client,
+  'Dos cursos del mismo autor no pueden compartir slug',
+  `update courses set slug = 'ship-en-siete-dias'
+   where id = 'cccccccc-0000-0000-0000-000000000009'`,
+  'courses_author_slug_key'
+);
+
+// Dos autores distintos sí: la URL lleva el handle delante y no se pisan.
+await expectSuccess(
+  client,
+  'Pero dos autores distintos sí pueden usar el mismo slug',
+  `insert into courses (author_id, category_slug, title, pricing_mode, status, slug)
+   values ('${NORA}', 'tech-web', 'Otro curso, mismo nombre', 'free', 'published',
+           'ship-en-siete-dias')`
+);
+
+await client.query(`
+  insert into course_landings (course_id, theme, promise, cta_label, blocks) values
+    ('cccccccc-0000-0000-0000-000000000001', 'tinta',
+     'Sal con algo publicado, no con apuntes.', 'Empezar',
+     '[{"type":"hero"},{"type":"preview"},{"type":"syllabus"}]'::jsonb),
+    ('cccccccc-0000-0000-0000-000000000009', 'papel',
+     'Esta no debería verse.', 'Empezar', '[]'::jsonb);
+`);
+
+const anonLanding = await asUser(
+  null,
+  `select course_id, theme from course_landings`
+);
+record(
+  'Sin cuenta se ve el escaparate del curso publicado',
+  anonLanding.rows.some((r) => r.course_id === 'cccccccc-0000-0000-0000-000000000001'),
+  `${anonLanding.rowCount} escaparate(s) visible(s)`
+);
+record(
+  'Y NO el del borrador',
+  !anonLanding.rows.some((r) => r.course_id === 'cccccccc-0000-0000-0000-000000000009'),
+  anonLanding.rows.some((r) => r.course_id === 'cccccccc-0000-0000-0000-000000000009')
+    ? 'SE ESTÁ FILTRANDO una página de un curso sin publicar'
+    : 'el borrador no aparece'
+);
+
+const kitDraftLanding = await asUser(
+  KIT,
+  `select count(*)::int as n from course_landings
+   where course_id = 'cccccccc-0000-0000-0000-000000000009'`
+);
+record(
+  'El autor sí ve el escaparate de su propio borrador, para poder montarlo',
+  kitDraftLanding.rows[0].n === 1,
+  `${kitDraftLanding.rows[0].n} fila(s)`
+);
+
+// El aislamiento entre creadores: Sam no puede reescribir la página de venta de
+// Kit. Sin RLS, esto es un secuestro de la URL pública de otro.
+const hijack = await asUser(
+  SAM,
+  `update course_landings set promise = 'Secuestrado'
+   where course_id = 'cccccccc-0000-0000-0000-000000000001'`
+);
+record(
+  'AISLAMIENTO: Sam no puede reescribir el escaparate de Kit',
+  hijack.rowCount === 0,
+  hijack.rowCount === 0
+    ? 'la policy no le deja tocar ni una fila'
+    : `HA MODIFICADO ${hijack.rowCount} fila(s) ajena(s)`
+);
+
+const stillKit = await client.query(
+  `select promise from course_landings where course_id = 'cccccccc-0000-0000-0000-000000000001'`
+);
+record(
+  'Y el texto de Kit sigue siendo el suyo',
+  stillKit.rows[0].promise === 'Sal con algo publicado, no con apuntes.',
+  stillKit.rows[0].promise
+);
+
+await expectFailure(
+  client,
+  'Los bloques tienen que ser una lista, no un objeto suelto',
+  `update course_landings set blocks = '{"type":"hero"}'::jsonb
+   where course_id = 'cccccccc-0000-0000-0000-000000000001'`,
+  'blocks_is_array'
+);
+
+// El trigger de fecha: sin él, el editor no puede saber cuál es la versión
+// buena si el creador tiene dos pestañas abiertas.
+const before = await client.query(
+  `select updated_at from course_landings where course_id = 'cccccccc-0000-0000-0000-000000000001'`
+);
+await client.query(`
+  update course_landings set theme = 'ambar'
+  where course_id = 'cccccccc-0000-0000-0000-000000000001'
+`);
+const after = await client.query(
+  `select updated_at from course_landings where course_id = 'cccccccc-0000-0000-0000-000000000001'`
+);
+record(
+  'Editar el escaparate actualiza su fecha',
+  after.rows[0].updated_at > before.rows[0].updated_at,
+  `${before.rows[0].updated_at.toISOString()} → ${after.rows[0].updated_at.toISOString()}`
+);
+
+// Y la regla de producto: la página de venta es presentación, no dinero. El
+// precio sigue viviendo en `courses`, donde lo protegen el gate de KYC y el
+// rango del MVP.
+const landingCols = await client.query(`
+  select column_name from information_schema.columns
+  where table_name = 'course_landings' and column_name similar to '%(price|amount|cents)%'
+`);
+record(
+  'El escaparate no guarda precio: eso vive en courses, con su gate de KYC',
+  landingCols.rowCount === 0,
+  landingCols.rowCount === 0
+    ? 'ninguna columna de precio'
+    : `columnas de precio: ${landingCols.rows.map((r) => r.column_name).join(', ')}`
 );
 
 console.log('\n========================================');

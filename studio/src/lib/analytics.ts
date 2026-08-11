@@ -87,25 +87,6 @@ export async function loadOverview(days = 28): Promise<Overview> {
   };
 }
 
-/** Cifras grandes en formato corto: 1284 → 1,3 K. */
-export function formatCount(value: number): string {
-  if (value < 1000) return String(value);
-  if (value < 1_000_000) {
-    const thousands = value / 1000;
-    return `${(thousands < 10 ? thousands.toFixed(1) : Math.round(thousands)).toString().replace('.', ',')} K`;
-  }
-  return `${(value / 1_000_000).toFixed(1).replace('.', ',')} M`;
-}
-
-/**
- * El importe se formatea como lo ve el comprador en la app (`$19`), no como lo
- * escribiría un español (`19 US$`). El creador tiene que reconocer sus cifras en
- * los dos sitios.
- */
-export function formatMoney(cents: number, currency = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
-  }).format(cents / 100);
-}
+// Los formateadores se mudaron a `format.ts`, que no importa nada. Se siguen
+// reexportando para no tocar quien ya los pedía aquí.
+export { formatCount, formatMoney } from './format';

@@ -6,12 +6,16 @@ import { usePathname } from 'next/navigation';
 /**
  * Navegación del panel.
  *
- * Solo tres secciones, y dos de ellas todavía vacías. Se enseñan igualmente,
- * marcadas como pendientes: esconder lo que no existe deja al creador sin saber
- * qué va a poder hacer aquí.
+ * Lo que todavía no existe se enseña igual, marcado como pendiente: esconderlo
+ * deja al creador sin saber qué va a poder hacer aquí.
+ *
+ * "Página de venta" tiene sección propia y no cuelga de un curso porque hoy
+ * `Cursos` no existe; colgarla de ahí obligaría a construir antes toda la
+ * gestión de cursos para poder llegar a ella.
  */
 const SECTIONS = [
   { href: '/', label: 'Resumen', ready: true },
+  { href: '/pagina', label: 'Página de venta', ready: true },
   { href: '/cursos', label: 'Cursos', ready: false },
   { href: '/perfil', label: 'Perfil', ready: false },
 ] as const;

@@ -25,11 +25,43 @@ es lo que separa la cabecera del cuerpo — con todo blanco no se separa nada.
 Hecho: el armazón, la estética y el resumen leyendo datos reales.
 Pendiente: gestión de cursos, subida de vídeo y perfil.
 
-### 2. Páginas públicas de curso y perfil — la de más palanca
+### 2. Página de venta del curso — **hecha, en `(public)/[handle]/[slug]`**
 
 URLs compartibles e indexables: el creador enseña su curso a su audiencia y
-Google encuentra a Bihapia. Necesita renderizado en servidor de verdad, que es
-otra razón para Next.js: `react-native-web` produce un DOM que no sirve para SEO.
+Google encuentra a Bihapia. Se sirve desde el servidor, que es otra razón para
+Next.js: `react-native-web` produce un DOM que no sirve para SEO.
+
+El creador la compone en `/pagina`: enciende, apaga y ordena bloques, y elige uno
+de tres temas. **La vista previa es el mismo componente que la página pública**,
+no una imitación — cualquier copia se separa de la realidad al segundo cambio.
+
+Hecho: el modelo (`0007_course_landing.sql`), los ocho bloques, los tres temas,
+el editor y la ruta pública con sus metadatos.
+Pendiente: el cobro, la portada (depende de la subida de media) y el perfil
+público del creador.
+
+#### Qué se tomó de Skool y qué no
+
+Se miró skool.com por dentro antes de diseñar. Lo que hace bien: **una sola
+página lo explica todo** —portada, nombre, descripción y un botón— sin menú ni
+pestañas. Eso se copia.
+
+Lo que deja abierto es el hueco que ocupa esta superficie: **la única palanca de
+personalización que Skool da al creador es la imagen de portada**. Tipografía,
+colores, orden y secciones son plantilla fija para todos, y el resultado se ve en
+su propia página de descubrimiento — una rejilla de miniaturas gritando, porque
+cuando el diseño no distingue, la única forma de destacar es subir el volumen de
+la imagen. Aquí el creador compone la página, y por eso los temas son **tres
+combinaciones cerradas** en vez de un selector de color libre: con libertad total
+la mayoría de páginas salen peor, y con tres ninguna puede quedar mal.
+
+Lo que **no** se toma, y es una decisión, no un olvido: su motor es la
+gamificación —un punto por like, niveles y tablas de clasificación a 7 días, 30
+días e histórica—, montado alrededor del estatus. Es exactamente la comparación
+social que este producto existe para evitar. Y por el mismo motivo la página
+tampoco lleva su prueba social: nada de "3.800 miembros" ni valoraciones. La
+prueba es que **una lección se ve entera y gratis antes de pagar**, que el
+paywall de `0002_rls.sql` ya servía sin tocar una sola policy.
 
 ### 3. Feed de consumo en web — la que menos aporta
 
@@ -55,6 +87,17 @@ ello.** Queda escrito como oportunidad, no como hecho establecido.
 Dos proyectos en el mismo repositorio: la app Expo en la raíz y el panel en
 `studio/`. Metro ignora `studio/` por `metro.config.js` y el `tsconfig` de la app
 lo excluye, así que cada uno compila por su cuenta.
+
+Y dentro de `studio/` hay a su vez **dos productos**, separados por grupos de
+rutas: `(studio)/` lleva el armazón del panel —cabecera, navegación lateral,
+lienzo gris— y `(public)/` no lleva ninguno, porque quien abre una página de
+venta viene a mirar un curso y la marca que debe ver es la del creador.
+
+La URL pública es `/[handle]/[slug]`, así que el handle ocupa el primer tramo y
+compite con las rutas del panel. Hoy no chocan, pero el día que exista
+`/cursos/[id]` quien tuviera el handle `cursos` se quedaría sin página. Como un
+handle no se le puede quitar a alguien después sin romperle los enlaces que ya
+repartió, `0007` lo impide con un check de palabras reservadas.
 
 Lo que hace barato ese segundo frente ya está hecho: **el esquema de Supabase con
 RLS es el contrato compartido**. Ambos proyectos hablan con la misma base, con
@@ -91,6 +134,26 @@ Cuatro cosas que solo se rompían en navegador y que ya están arregladas:
   sin interacción previa. En web arranca en silencio; **falta un control para
   activar el sonido**, que es lo que hacen todos los feeds de vídeo en web.
 
+### Trampas del panel, encontradas rompiéndolo
+
+- **Un componente de cliente no puede importar valores de un módulo que toque
+  `next/headers`.** El editor pedía `THEMES` y `formatMoney`, y esos imports
+  arrastraron `supabase.ts` al navegador; la compilación se cayó entera. Los
+  tipos no cuentan —se borran— pero cualquier constante o función sí. De ahí
+  salen `lib/landing.ts` (modelo puro) frente a `lib/landing.server.ts`, y
+  `lib/format.ts` frente a `lib/analytics.ts`.
+- **`divide-y` de Tailwind no sigue el tema.** Solo pone el grosor; el color se
+  queda en `currentColor`, que es la tinta. Sobre papel salía una raya negra
+  dura y en el tema Tinta habría sido negra sobre negro, o sea invisible. Los
+  filos se piden explícitos con `var(--l-line)`.
+- **Para encoger la vista previa, `zoom` y no `transform: scale`.** Con
+  `transform` la caja conserva su tamaño original para la maquetación y hay que
+  compensar con un margen negativo inventado, que unas veces corta la página y
+  otras deja un hueco. `zoom` recalcula la caja y el scroll acaba donde debe.
+- **Mover rutas deja tipos generados obsoletos.** Tras reorganizar `app/` en
+  grupos, `tsc` se quejaba de módulos que ya no existen. Están en `.next/types`;
+  se borran y se regeneran solos.
+
 ### Ruido conocido, no defectos
 
 - `AbortError: play() interrupted ... paused to save power` en consola: es Chrome
@@ -108,10 +171,16 @@ vistas le eran visibles. Se arregló con agregados `security definer` en
 policies, que habría expuesto el rastro de cada persona. Bajo test en la sección
 9 de `schema.test.mjs`, incluido que un creador no ve los datos de otro.
 
+**Resuelto:** un curso no tenía URL. `0007` le da `slug`, único por autor —no
+global, porque el handle va delante y dos creadores no se pisan— y añade
+`course_landings` con la composición de la página en `jsonb`.
+
 **Pendiente:**
 
+- **Guardar la página de venta.** El editor compone y previsualiza, pero todavía
+  no escribe en `course_landings`.
 - **Subida de media.** Nada escribe en `media_assets` ni sube ficheros; el bucket
-  de Storage no está creado ni tiene políticas.
+  de Storage no está creado ni tiene políticas. Es lo que bloquea la portada.
 - **Edición de cursos.** Las policies dejan al autor gestionar sus cursos y
   `course_items`, pero no hay ninguna interfaz ni flujo de reordenación.
 - **Liquidaciones.** Los ingresos ya se pueden leer, pero no hay nada para pagar

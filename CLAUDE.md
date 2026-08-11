@@ -65,6 +65,15 @@ La estrategia web está en [docs/web.md](docs/web.md).
   números. Enseñar cuánta gente ha dado a "me gusta" es la comparación social que
   el producto existe para evitar. **La regla es del consumidor, no del creador**:
   el panel de `studio/` es todo cifras, y así debe ser.
+- **La página de venta tampoco lleva cifras.** Ni alumnos, ni valoraciones, ni
+  "312 personas ya lo tienen". Es la misma comparación social que la regla de
+  arriba evita, solo que en el escaparate. La prueba de que el curso vale es que
+  se ve una lección entera gratis (`course_items.is_preview`). Skool hace lo
+  contrario y es deliberado no seguirle: ver [docs/web.md](docs/web.md).
+- **La vista previa del editor y la página pública son el mismo componente.**
+  `components/landing/Landing.tsx` se renderiza igual en `/pagina` y en
+  `/[handle]/[slug]`. Si alguna vez hay dos versiones, "lo que ves es lo que se
+  publica" deja de ser verdad al segundo cambio.
 - **El creador ve cuántos, nunca quiénes.** Sus datos salen de las funciones
   agregadas de `0006_creator_analytics.sql`. No abras las policies de
   `purchases` ni de `interactions` para que le cuadren los números: eso expondría
