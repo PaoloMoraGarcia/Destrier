@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 
-import { Curtain, Marquee, Reveal, SmoothScroll, WordCascade } from './motion';
+import { Curtain, Drift, Marquee, Reveal, SmoothScroll } from './motion';
 import { Nav } from './Nav';
 import { Band, Cta, Label, Statement } from './pieces';
 
@@ -10,9 +10,9 @@ import { Band, Cta, Label, Statement } from './pieces';
  * La landing de Bihapia.
  *
  * Adaptada de houseofhoney.com: se toma su recorrido —portada con el nombre a
- * sangre, bloques de color alternando, etiqueta pequeña y frase enorme, cascada
- * palabra por palabra, marquesina, rejilla de tres y cierre— y su movimiento,
- * no su paleta ni su contenido.
+ * sangre, bloques de color alternando, etiqueta pequeña y frase enorme,
+ * marquesina, rejilla de tres y cierre— y su movimiento, no su paleta ni su
+ * contenido.
  *
  * **Las fotos son provisionales.** Son de archivo, de una reunión de equipo, y
  * sirven para juzgar la maqueta pero no dicen nada de la tesis del producto: no
@@ -50,29 +50,34 @@ export function Landing() {
       <SmoothScroll>
         {/* ---------------------------------------------------------------
             Portada
-            El nombre ocupa el ancho entero, como en la referencia. El eslogan
-            va en tono sobre tono y medio tapado por la foto: se lee si lo
-            buscas, y ese es el punto.
+            El nombre ocupa el ancho entero y debajo va el vídeo. Nada más: sin
+            eslogan ni entradilla, que es lo más minimalista que puede ser sin
+            dejar de decir cómo se llama.
         --------------------------------------------------------------- */}
         <Band tone="bone" className="@container pt-24 sm:pt-28">
           {/* Sin margen lateral: la palabra toca los dos bordes, que es de
               donde sale toda la fuerza de la portada de la referencia. */}
           <h1 className="wordmark-hero">bi&amp;hapia</h1>
 
-          <p className="mt-6 px-3 font-serif text-[clamp(1.4rem,3.4vw,2.6rem)] uppercase leading-[1.05] tracking-tight text-[#0a0a0a]/25 sm:px-4">
-            Disfruta de lo
-            <br />
-            que no sabes
-          </p>
+          {/*
+            El vídeo va en 4K y pesa lo que pesa, así que el `poster` no es un
+            adorno: es lo que se ve mientras llega, y sin él la portada arranca
+            con un rectángulo negro.
 
-          <div className="relative mt-10 h-[46svh] w-full sm:h-[62svh]">
-            <Image
-              src="/fotos/estudio-01.jpg"
-              alt=""
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover"
+            Silenciado por obligación, no por gusto: los navegadores prohíben
+            autoreproducir con sonido sin interacción previa.
+          */}
+          <div className="mt-10 h-[46svh] w-full sm:h-[62svh]">
+            <video
+              src="/video/portada.mp4"
+              poster="/video/portada-poster.jpg"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+              aria-hidden
+              className="h-full w-full object-cover"
             />
           </div>
         </Band>
@@ -80,28 +85,16 @@ export function Landing() {
         {/* ---------------------------------------------------------------
             La idea
         --------------------------------------------------------------- */}
-        <Band tone="ink" id="idea" className="px-6 py-32 text-center sm:py-48">
-          <Label className="mb-16">01 — La idea</Label>
+        <Band tone="ink" id="idea" className="py-32 sm:py-48">
+          <Label className="mb-24 px-6 text-center">01 — La idea</Label>
 
-          <Statement className="mx-auto max-w-[13ch]">
-            El internet que tienes te enseña lo que te estás perdiendo
-          </Statement>
-
-          <WordCascade
-            className="mx-auto mt-28 font-serif text-[clamp(1.8rem,5vw,3.4rem)] uppercase leading-[1.06]"
-            words={[
-              'Aquí',
-              'no',
-              'hay',
-              'números',
-              'ni',
-              'ranking',
-              'ni',
-              'nada',
-              'que',
-              'alcanzar',
-            ]}
-          />
+          {/*
+            Maciza y no en hueco: la regla del contorno es del wordmark
+            `bi&hapia`, no de todo el texto de la marca.
+          */}
+          <Drift className="font-[family-name:var(--font-wordmark)] text-[clamp(3.2rem,11vw,9rem)] leading-[0.9] tracking-[-0.02em]">
+            Nothing to catch up on
+          </Drift>
 
           <Marquee
             text="bihapia"

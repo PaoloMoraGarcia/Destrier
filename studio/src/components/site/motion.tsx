@@ -98,6 +98,8 @@ interface Subject {
   span: number;
   rise: number;
   offset: number;
+  /** Si está, el elemento cruza en horizontal en vez de aparecer. */
+  travel?: number;
 }
 
 const subjects = new Set<Subject>();
@@ -106,8 +108,24 @@ let loop = 0;
 function paintAll() {
   const height = window.innerHeight;
 
-  for (const { node, span, rise, offset } of subjects) {
+  for (const { node, span, rise, offset, travel } of subjects) {
     const rect = node.getBoundingClientRect();
+
+    // El desplazamiento horizontal se mide contra la travesía completa del
+    // elemento por la pantalla —de entrar por abajo a salir por arriba— para
+    // que el recorrido dure toda la sección y no un tramo corto.
+    if (travel !== undefined) {
+      // El recorrido es exactamente lo que sobresale del contenedor, medido en
+      // cada fotograma. Con un número fijo, al cambiar el ancho de la ventana o
+      // el tamaño de la fuente el final de la frase se queda sin salir nunca —
+      // que es justo lo que pasaba con el valor puesto a ojo.
+      const overflow = Math.max(0, node.scrollWidth - node.clientWidth);
+      const crossing = (height - rect.top) / (height + rect.height);
+      const progress = Math.min(1, Math.max(0, crossing));
+
+      node.style.transform = `translate3d(${-progress * overflow * travel}px, 0, 0)`;
+      continue;
+    }
 
     // Empieza cuando el borde superior entra por abajo y termina `span`
     // pantallas más arriba. `offset` retrasa a los hermanos para escalonar.
@@ -200,25 +218,49 @@ export function Reveal({
 }
 
 /**
- * La cascada palabra por palabra.
+ * Una línea que cruza la pantalla conforme bajas.
  *
- * Cada palabra en su línea y con su propio retraso, que es exactamente lo que
- * hace la referencia con su manifiesto.
+ * Atada al scroll y no en bucle por temporizador: si paras, se para. Un bucle
+ * automático al lado de unas apariciones que responden a la rueda se notaría
+ * como dos páginas distintas pegadas.
+ *
+ * La línea tiene que ser **más ancha que la pantalla** para que el recorrido
+ * signifique algo; de ahí que vaya en la fuente de display, que es muy
+ * expandida, y sin partir.
  */
-export function WordCascade({
-  words,
+export function Drift({
+  children,
   className = '',
+  travel = 1,
 }: {
-  words: string[];
+  children: ReactNode;
   className?: string;
+  /**
+   * Fracción de lo que sobresale que se recorre. Con 1 la frase empieza
+   * alineada a la izquierda y acaba enseñando su último carácter.
+   */
+  travel?: number;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotion();
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+
+    if (reduced) {
+      node.style.transform = 'none';
+      return;
+    }
+
+    return subscribe({ node, span: 1, rise: 0, offset: 0, travel });
+  }, [reduced, travel]);
+
   return (
-    <div className={className}>
-      {words.map((word, index) => (
-        <Reveal key={`${word}-${index}`} offset={index} rise={28} span={0.22}>
-          {word}
-        </Reveal>
-      ))}
+    <div className="w-full overflow-hidden">
+      <div ref={ref} className={`whitespace-nowrap will-change-transform ${className}`}>
+        {children}
+      </div>
     </div>
   );
 }

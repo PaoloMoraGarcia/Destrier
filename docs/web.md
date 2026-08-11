@@ -98,8 +98,17 @@ casi nuestra pila, así que se pudo reproducir de verdad y no de aproximación:
 - Su curva, `cubic-bezier(0.65, 0.05, 0.36, 1)`, tal cual: es una curva, no una
   marca.
 - Bloques de color a sangre, etiqueta pequeña y frase enorme de medida estrecha,
-  cascada palabra por palabra, marquesina, rejilla de tres y cierre con esquinas
-  redondeadas sobre el pie.
+  marquesina, rejilla de tres y cierre con esquinas redondeadas sobre el pie.
+
+La sección oscura la ocupa **una sola línea que cruza la pantalla al bajar**,
+`Nothing to catch up on`, en `Drift`. Va atada al scroll como todo lo demás: si
+paras, se para. Un bucle por temporizador al lado de unas apariciones que
+responden a la rueda se notaría como dos páginas distintas pegadas.
+
+El recorrido **se mide en cada fotograma** contra lo que el texto sobresale del
+contenedor. Con un número fijo, al cambiar el ancho de la ventana o el tamaño de
+la fuente el final de la frase no llegaba a salir nunca — que es exactamente lo
+que pasó con el valor puesto a ojo.
 
 Lo que **no** se tomó: la paleta —aquí es hueso, tinta y ámbar— ni el wordmark
 macizo. El nuestro va en hueco incluso en la portada, porque esa es la regla de
@@ -108,6 +117,19 @@ la marca y no se rompe por parecerse más a la referencia.
 **Instrument Serif** entra solo para las frases grandes: la referencia vive de la
 tensión sans/serif y sin una segunda voz la maqueta se sostiene pero pierde el
 carácter. El wordmark y las monoespaciadas no se tocan.
+
+#### El vídeo de portada
+
+El original son 3840×2160 y **56 MB a 39 Mbps**, que es bitrate de banco de
+imágenes: pensado para reeditar, no para reproducir. Se re-codifica **sin bajar
+resolución** y queda en 37 MB.
+
+Se comprobó comparando el mismo fotograma de los dos al 100 %: no se distingue.
+Y se probó también 1080p, que baja a 15 MB pero **sí se nota** en una pantalla
+Retina —la hierba y los guijarros pierden definición—, así que se descartó.
+
+Lleva `poster`, y no es un adorno: con 37 MB, sin él la portada arranca con un
+rectángulo negro. Y va silenciado por obligación, no por gusto.
 
 #### Las fotos son provisionales
 
