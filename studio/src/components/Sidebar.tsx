@@ -14,10 +14,10 @@ import { usePathname } from 'next/navigation';
  * gestión de cursos para poder llegar a ella.
  */
 const SECTIONS = [
-  { href: '/', label: 'Resumen', ready: true },
-  { href: '/pagina', label: 'Página de venta', ready: true },
-  { href: '/cursos', label: 'Cursos', ready: false },
-  { href: '/perfil', label: 'Perfil', ready: false },
+  { href: '/panel', label: 'Resumen', ready: true },
+  { href: '/panel/pagina', label: 'Página de venta', ready: true },
+  { href: '/panel/cursos', label: 'Cursos', ready: false },
+  { href: '/panel/perfil', label: 'Perfil', ready: false },
 ] as const;
 
 export function Sidebar() {

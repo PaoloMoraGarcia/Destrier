@@ -49,3 +49,63 @@ body {
   -webkit-text-stroke: 1.4px var(--color-ink);
   letter-spacing: -0.01em;
 }
+
+/* ---------------------------------------------------------------------------
+ * La landing
+ * ------------------------------------------------------------------------ */
+
+@theme {
+  --font-serif: var(--font-instrument), Georgia, serif;
+}
+
+/*
+ * El wordmark de la portada, a lo ancho del viewport y en hueco.
+ *
+ * En hueco porque es la regla de la marca y no se rompe por parecerse más a la
+ * referencia —que lo lleva macizo—: el contorno es lo que hace que este nombre
+ * sea este nombre, en el splash de la app y aquí.
+ *
+ * `cqw` y no `vw`: se mide contra el contenedor, así que la misma pieza sirve
+ * igual a pantalla completa que dentro de una caja más estrecha. El 19.3 sale
+ * de medirlo, no de estimarlo: son ocho caracteres de una fuente muy expandida,
+ * y a ese tamaño la palabra toca los dos bordes.
+ */
+.wordmark-hero {
+  font-family: var(--font-wordmark);
+  font-size: 19.9cqw;
+  line-height: 0.86;
+  /* En una sola línea siempre. Si parte, deja de ser un cartel y además la
+     medida del ajuste deja de cuadrar. */
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+  color: transparent;
+  /* En `em` para que el grosor acompañe al tamaño: fijo en píxeles
+     desaparecería en un monitor grande y engordaría en un móvil. */
+  -webkit-text-stroke: 0.013em var(--color-ink);
+}
+
+@keyframes bh-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  /* Justo la mitad: el contenido va duplicado, así que ahí el bucle empalma
+     consigo mismo y no se ve la costura. */
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes bh-curtain {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}

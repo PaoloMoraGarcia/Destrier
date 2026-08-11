@@ -74,7 +74,50 @@ tampoco lleva su prueba social: nada de "3.800 miembros" ni valoraciones. La
 prueba es que **una lección se ve entera y gratis antes de pagar**, que el
 paywall de `0002_rls.sql` ya servía sin tocar una sola policy.
 
-### 3. Feed de consumo en web — la que menos aporta
+### 3. La landing pública — **hecha, en `(public)/page.tsx`**
+
+La cara del producto, en la raíz del dominio. Por eso el panel se mudó a
+`/panel`: bihapia.com tiene que enseñar el producto, no un cuadro de mandos.
+
+Le habla a quien mira, no a quien publica, y lleva por delante la tesis
+anti-FOMO. El recorrido y el movimiento están adaptados de **houseofhoney.com**.
+
+#### Qué se tomó de la referencia
+
+Se recorrió por dentro antes de diseñar. Va sobre Next.js, Tailwind y **Lenis**,
+casi nuestra pila, así que se pudo reproducir de verdad y no de aproximación:
+
+- **La página scrollea dentro de un contenedor**, no en el `body`. Es lo que
+  Lenis necesita para gobernar el desplazamiento.
+- **Las apariciones se interpolan desde la posición en pantalla**, no se sueltan
+  con una clase al entrar. Se ve parando el scroll a media aparición: el texto se
+  queda quieto donde esté en vez de terminar solo. Eso es lo que hace que la
+  página responda a la rueda de forma continua, y es la mitad de por qué se
+  siente suave; la otra mitad es Lenis. Lo comprobé primero en la referencia y
+  luego en la nuestra, con los mismos números.
+- Su curva, `cubic-bezier(0.65, 0.05, 0.36, 1)`, tal cual: es una curva, no una
+  marca.
+- Bloques de color a sangre, etiqueta pequeña y frase enorme de medida estrecha,
+  cascada palabra por palabra, marquesina, rejilla de tres y cierre con esquinas
+  redondeadas sobre el pie.
+
+Lo que **no** se tomó: la paleta —aquí es hueso, tinta y ámbar— ni el wordmark
+macizo. El nuestro va en hueco incluso en la portada, porque esa es la regla de
+la marca y no se rompe por parecerse más a la referencia.
+
+**Instrument Serif** entra solo para las frases grandes: la referencia vive de la
+tensión sans/serif y sin una segunda voz la maqueta se sostiene pero pierde el
+carácter. El wordmark y las monoespaciadas no se tocan.
+
+#### Las fotos son provisionales
+
+Son de archivo, de una reunión de equipo. Sirven para juzgar maqueta y
+movimiento, pero **no dicen nada de la tesis**: no hay un móvil, ni vídeo
+vertical, ni nadie mirando nada. Están en la sección de creadores, que es donde
+menos desentonan. Los másteres pesados quedan en `Images/`; en `public/fotos/`
+van reducidas a 2200 px.
+
+### 4. Feed de consumo en web — la que menos aporta
 
 Nadie hace scroll de Reels en un portátil como hábito. Y un vertical a pantalla
 completa en un monitor 16:9 se ve mal. Funciona hoy, pero no es una prioridad.
@@ -179,6 +222,23 @@ Cuatro cosas que solo se rompían en navegador y que ya están arregladas:
 - **El vídeo no arrancaba.** Los navegadores prohíben autoreproducir con sonido
   sin interacción previa. En web arranca en silencio; **falta un control para
   activar el sonido**, que es lo que hacen todos los feeds de vídeo en web.
+
+### Trampas del movimiento, encontradas rompiéndolo
+
+- **Un `requestAnimationFrame` por elemento no escala.** La primera versión de
+  las apariciones abría un bucle por cada una: veinticinco bucles peleándose por
+  cada fotograma para un trabajo que cabe en uno. Ahora hay un registro
+  compartido y un solo bucle, que además se apaga solo cuando no queda nada
+  suscrito.
+- **`rAF` no dispara con la pestaña en segundo plano.** Verificando, las
+  opacidades se quedaban congeladas y parecía que el bucle estaba muerto. No lo
+  estaba: el navegador lo pausa. Antes de dar por roto un bucle de animación,
+  hay que traer la pestaña al frente.
+- **Medir el wordmark mientras parte en dos líneas da un número falso.** Ajusté
+  el tamaño con esa medida y me salió la mitad de lo que tocaba. Lleva
+  `white-space: nowrap`, y no solo por estética.
+- **El marquee se animaba dos veces**, en el contenedor y en la pista. La pista
+  es la única que se mueve; el contenedor solo recorta.
 
 ### Trampas del panel, encontradas rompiéndolo
 

@@ -12,7 +12,7 @@ export default async function EntrarPage() {
   } = (await supabase?.auth.getUser()) ?? { data: { user: null } };
 
   // Con sesión, aquí no hay nada que hacer.
-  if (user) redirect('/');
+  if (user) redirect('/panel');
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center px-6 py-16">

@@ -65,6 +65,17 @@ La estrategia web está en [docs/web.md](docs/web.md).
   números. Enseñar cuánta gente ha dado a "me gusta" es la comparación social que
   el producto existe para evitar. **La regla es del consumidor, no del creador**:
   el panel de `studio/` es todo cifras, y así debe ser.
+- **La landing vive en `/` y el panel en `/panel`.** La raíz del dominio enseña
+  el producto, no un cuadro de mandos. Antes de añadir una ruta de dos tramos al
+  panel, mira los handles reservados de `0008`: la pública es `/[handle]/[slug]`
+  y una ruta estática nueva puede dejar sin página a quien tenga ese handle.
+- **El wordmark va en hueco también en la portada de la landing.** La referencia
+  que se adaptó lo lleva macizo; aquí no. El contorno es lo que hace que este
+  nombre sea este nombre.
+- **El movimiento de la landing se apaga con `prefers-reduced-motion`**, entero:
+  Lenis, apariciones, marquesina y cortina. Y las apariciones se interpolan desde
+  la posición en pantalla, no con una clase al entrar — si lo cambias por una
+  clase, deja de sentirse continuo. Todo vive en `components/site/motion.tsx`.
 - **La página de venta tampoco lleva cifras.** Ni alumnos, ni valoraciones, ni
   "312 personas ya lo tienen". Es la misma comparación social que la regla de
   arriba evita, solo que en el escaparate. La prueba de que el curso vale es que

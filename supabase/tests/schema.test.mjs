@@ -137,6 +137,7 @@ for (const file of [
   '0005_feed_view.sql',
   '0006_creator_analytics.sql',
   '0007_course_landing.sql',
+  '0008_reserved_handles.sql',
 ]) {
   try {
     await client.query(readFileSync(`${MIGRATIONS}/${file}`, 'utf8'));
@@ -789,6 +790,25 @@ record(
   'Kit sí escribe en el suyo',
   own.rowCount === 1,
   `${own.rowCount} fila actualizada`
+);
+
+// Los handles que el panel se reserva. Si uno de estos se pudiera coger, la
+// ruta correspondiente del panel ganaría a `/[handle]/[slug]` y esa persona se
+// quedaría sin página pública — sin arreglo posible, porque quitarle el handle
+// después le rompería todos los enlaces que ya hubiera repartido.
+for (const reserved of ['panel', 'entrar', 'cursos', 'admin']) {
+  await expectFailure(
+    client,
+    `El handle "${reserved}" está reservado`,
+    `update profiles set handle = '${reserved}' where id = '${SAM}'`,
+    'handle_not_reserved'
+  );
+}
+
+await expectSuccess(
+  client,
+  'Y uno normal se sigue pudiendo coger',
+  `update profiles set handle = 'samsaysless' where id = '${SAM}'`
 );
 
 await expectFailure(

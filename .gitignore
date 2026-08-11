@@ -53,3 +53,6 @@ vendor/bundle/
 studio/node_modules/
 studio/.next/
 studio/out/
+
+# Másteres de las fotos de la landing: en public/ van las versiones reducidas.
+Images/

@@ -55,7 +55,7 @@ export async function verifyCode(email: string, code: string): Promise<AuthResul
 
   if (error) return { error: error.message };
 
-  redirect('/');
+  redirect('/panel');
 }
 
 export async function signOut() {
