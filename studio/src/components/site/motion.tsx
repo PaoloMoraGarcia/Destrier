@@ -122,7 +122,16 @@ function paintAll() {
     // palabras.
     if (pinned) {
       const runway = Math.max(1, rect.height - height);
-      const progress = Math.min(1, Math.max(0, -rect.top / runway));
+
+      // El reparto arranca **antes** de que la pantalla se clave: cuando el
+      // borde superior de la pista todavía está a un 40 % de pantalla del tope.
+      //
+      // Sin esta ventaja, al engancharse el clavado quedaba una pantalla entera
+      // de negro con todas las palabras a opacidad 0 — y lo mismo al volver a
+      // subir. Ahora, para cuando la página se detiene, la primera palabra ya
+      // está dentro y nunca hay un fotograma vacío.
+      const lead = height * 0.4;
+      const progress = Math.min(1, Math.max(0, (lead - rect.top) / (runway + lead)));
       const parts = pinned.parts;
 
       // Las ventanas se solapan: cada palabra tarda el doble de lo que le

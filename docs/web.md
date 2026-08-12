@@ -116,9 +116,31 @@ ensanchándola ni acortándola: en la posición en que la frase está cómoda de
 siempre faltaba algo por un lado. El problema era pedirle al scroll dos cosas a
 la vez —bajar la página y mover el texto—; clavando la página solo hace una.
 
+**El reparto arranca antes de que la pantalla se clave**, cuando la pista todavía
+está entrando. Sin esa ventaja quedaba una pantalla entera de negro con todas las
+palabras a opacidad 0 justo al engancharse el clavado — y lo mismo al volver a
+subir. Ahora, para cuando la página se detiene, la primera palabra ya está
+dentro.
+
 Con `prefers-reduced-motion` **no se clava nada**: la pista se colapsa y la frase
 se ve entera. Atrapar el scroll a quien ha pedido que no haya movimiento sería lo
 contrario de lo que pide.
+
+### La portada va enmarcada
+
+Una franja arriba que cierra **al ras del asta de la "h" y del punto de la "i"**,
+y el vídeo que abre **al ras del rabo de la "p"**. El nombre queda encajado entre
+las dos.
+
+Las dos usan la misma corrección: la caja de la línea no es donde está la tinta,
+así que el wordmark sube `--ink-top` para que el filo y el arranque del asta
+caigan en el mismo píxel. Comprobado a 1440 y a 375, que es lo que demuestra que
+el ajuste en `em` escala.
+
+La nav vive dentro del marco y **no va fija**: se va al bajar, igual que el
+vídeo. Va en tres columnas (`1fr auto 1fr`) y no con `justify-between`, porque
+así los enlaces quedan centrados **en la pantalla** y no entre el logo y el
+botón, que no miden lo mismo.
 
 Lo que **no** se tomó: la paleta —aquí es hueso, tinta y ámbar— ni el wordmark
 macizo. El nuestro va en hueco incluso en la portada, porque esa es la regla de
@@ -285,7 +307,12 @@ Cuatro cosas que solo se rompían en navegador y que ya están arregladas:
   que rellenan la cadena de variables que el propio Tailwind espera.
 - **Un párrafo dentro de un contenedor flex crece hasta su contenido**, así que
   `flex-wrap` no envuelve nada y el texto se sale por la derecha en vez de partir
-  y centrarse. Necesita `w-full`.
+  y centrarse. Necesita `w-full`. Le pasó lo mismo a la nav dentro del marco:
+  medía 531 px de 1440 y las columnas no repartían nada.
+- **Sobre el marco blanco, las burbujas casi no se ven**: el cristal claro sobre
+  blanco da **1,1 : 1** de contraste, así que lo único que las separa del fondo es
+  la sombra. El texto sí se lee (17,97 : 1). Si hiciera falta que la burbuja se
+  leyera como pieza, hay que teñirla, no subirle la opacidad.
 - **La caja de una línea de texto no es donde está su tinta.** Con
   `line-height` menor que 1, en el wordmark la "b" empieza 0.0622 em por debajo
   del borde superior y el rabo de la "p" sale 0.0892 em por debajo del inferior.

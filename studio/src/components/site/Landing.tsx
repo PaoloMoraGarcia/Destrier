@@ -45,22 +45,40 @@ export function Landing() {
   return (
     <>
       <Curtain />
-      <Nav />
 
       <SmoothScroll>
         {/* ---------------------------------------------------------------
             Portada
-            El nombre ocupa el ancho entero y debajo va el vídeo. Nada más: sin
-            eslogan ni entradilla, que es lo más minimalista que puede ser sin
-            dejar de decir cómo se llama.
+            Marco negro arriba, el nombre a todo el ancho y el vídeo debajo.
+            Nada más: sin eslogan ni entradilla, que es lo más minimalista que
+            puede ser sin dejar de decir cómo se llama.
+
+            El marco cierra al ras del asta de la "h" y del punto de la "i", y
+            el vídeo abre al ras del rabo de la "p". El nombre queda encajado
+            entre los dos.
         --------------------------------------------------------------- */}
-        {/* El `padding-top` solo libra la nav —40 px de burbuja más 12 de filo—;
-            el aire visible bajo ella lo pone el margen del propio wordmark, que
-            sabe dónde está su tinta. */}
-        <Band tone="bone" className="@container pt-[3.25rem]">
-          {/* Sin margen lateral: la palabra toca los dos bordes, que es de
-              donde sale toda la fuerza de la portada de la referencia. */}
-          <h1 className="wordmark-hero mt-[calc(0.75rem-var(--ink-top))]">bi&amp;hapia</h1>
+        <Band tone="bone" className="@container">
+          {/* El marco lleva la nav centrada verticalmente, con el mismo aire
+              arriba y abajo, que es lo que fija su altura.
+
+              Blanco puro y no el hueso del lienzo: contra `#f0f0ec` el blanco
+              se distingue, y así el marco sigue leyéndose como una franja que
+              cierra al ras del asta. Del mismo color no habría marco. */}
+          <div className="flex h-[5.5rem] items-center bg-white">
+            <Nav />
+          </div>
+
+          {/*
+            El wordmark sube `--ink-top`.
+
+            La caja de la línea no es donde está la tinta: con `line-height`
+            menor que 1, la "b" empieza 0.0622em por debajo del borde de la
+            caja. Sin esta subida quedaría una franja clara entre el negro y el
+            arranque del asta — invisible en el CSS y muy visible en pantalla.
+
+            Sin margen lateral: la palabra toca los dos bordes.
+          */}
+          <h1 className="wordmark-hero mt-[calc(-1*var(--ink-top))]">bi&amp;hapia</h1>
 
           {/*
             El vídeo va en 4K y pesa lo que pesa, así que el `poster` no es un
@@ -88,8 +106,11 @@ export function Landing() {
         {/* ---------------------------------------------------------------
             La idea
         --------------------------------------------------------------- */}
-        <Band tone="ink" id="idea" className="@container pt-32 sm:pt-48">
-          <Label className="mb-24 px-6 text-center">01 — La idea</Label>
+        {/* Relleno corto y etiqueta pegada a la frase: lo que sobraba aquí se
+            veía como un tramo largo de negro vacío antes de que apareciera
+            nada. */}
+        <Band tone="ink" id="idea" className="@container pt-20 sm:pt-28">
+          <Label className="mb-10 px-6 text-center">01 — La idea</Label>
 
           {/*
             Maciza y no en hueco: la regla del contorno es del wordmark
@@ -105,7 +126,7 @@ export function Landing() {
 
           <Marquee
             text="bihapia"
-            className="pb-32 font-mono text-[11px] uppercase tracking-[0.3em] opacity-40 sm:pb-48"
+            className="pb-20 font-mono text-[11px] uppercase tracking-[0.3em] opacity-40 sm:pb-28"
           />
         </Band>
 
