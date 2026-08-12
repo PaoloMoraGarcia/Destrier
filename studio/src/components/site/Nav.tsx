@@ -5,12 +5,15 @@ import Link from 'next/link';
 import { EASE } from './motion';
 
 /**
- * La navegación en cápsula.
+ * La navegación en burbujas.
  *
- * Flota sobre el contenido y va segmentada: cada enlace en su celda, separados
- * por un filo. Es lo que hace la referencia, y funciona porque la cápsula tiene
- * su propio fondo — así se lee igual encima de una foto que encima de un bloque
- * de color, sin necesidad de cambiar de tema al pasar por encima.
+ * Cinco piezas sueltas flotando sobre el contenido, pegadas al borde de arriba.
+ * Cada una lleva su propio cristal, y por eso se leen igual encima de la banda
+ * clara que encima del vídeo — el material es lo que las hace independientes del
+ * fondo, sin tener que cambiar de tema al pasar por encima.
+ *
+ * El cristal vive entero en la clase `.bubble` de `globals.css`. Aquí no hay ni
+ * un `backdrop-filter`: si cambia el material, no se toca este archivo.
  */
 
 const LINKS = [
@@ -21,21 +24,23 @@ const LINKS = [
 
 export function Nav() {
   return (
-    <nav className="pointer-events-none fixed inset-x-0 top-0 z-50 flex items-center justify-between gap-3 p-3 sm:p-4">
-      <div className="pointer-events-auto flex items-center overflow-hidden rounded-full bg-[#f0f0ec]">
+    // Sin `padding-top`: las burbujas tocan el borde superior. Abajo sí queda un
+    // filo, que es lo que las separa del wordmark.
+    <nav className="pointer-events-none fixed inset-x-0 top-0 z-50 flex items-start justify-between gap-2 px-2 pb-3 sm:px-3">
+      <div className="flex items-center gap-2">
         <Link
           href="/"
           aria-label="Bihapia, inicio"
-          className="grid size-10 shrink-0 place-items-center bg-[#0a0a0a]">
-          <span className="block size-3 rounded-[2px] bg-[#f0f0ec]" />
+          className="bubble pointer-events-auto grid size-10 shrink-0 place-items-center rounded-full">
+          <span className="block size-3 rounded-[2px] bg-[#0a0a0a]" />
         </Link>
 
         {LINKS.map((link) => (
           <a
             key={link.href}
             href={link.href}
-            className="hidden border-l border-[#0a0a0a]/12 px-5 py-2.5 text-sm text-[#0a0a0a] hover:bg-[#0a0a0a]/5 sm:block"
-            style={{ transition: `background-color 400ms ${EASE}` }}>
+            className="bubble pointer-events-auto hidden rounded-full px-5 py-2.5 text-sm text-[#0a0a0a] hover:brightness-[1.06] sm:block"
+            style={{ transition: `filter 400ms ${EASE}` }}>
             {link.label}
           </a>
         ))}
@@ -43,8 +48,8 @@ export function Nav() {
 
       <Link
         href="/entrar"
-        className="pointer-events-auto flex items-center gap-3 rounded-full bg-[#f0f0ec] py-1.5 pl-5 pr-1.5 text-sm text-[#0a0a0a]"
-        style={{ transition: `opacity 400ms ${EASE}` }}>
+        className="bubble pointer-events-auto flex items-center gap-3 rounded-full py-1.5 pl-5 pr-1.5 text-sm text-[#0a0a0a] hover:brightness-[1.06]"
+        style={{ transition: `filter 400ms ${EASE}` }}>
         <span>Publicar</span>
         <span className="grid size-7 place-items-center rounded-full bg-[#0a0a0a]" aria-hidden>
           <svg width="11" height="9" viewBox="0 0 13 11" fill="none">

@@ -98,8 +98,11 @@ interface Subject {
   span: number;
   rise: number;
   offset: number;
-  /** Si está, el elemento cruza en horizontal en vez de aparecer. */
-  travel?: number;
+  /**
+   * Si está, el nodo es una **pista clavada**: no aparece él, sino que reparte su
+   * progreso entre los hijos que le indique `parts`.
+   */
+  pinned?: { parts: HTMLElement[] };
 }
 
 const subjects = new Set<Subject>();
@@ -108,35 +111,34 @@ let loop = 0;
 function paintAll() {
   const height = window.innerHeight;
 
-  for (const { node, span, rise, offset, travel } of subjects) {
+  for (const { node, span, rise, offset, pinned } of subjects) {
     const rect = node.getBoundingClientRect();
 
-    // El desplazamiento horizontal se mide contra la travesía completa del
-    // elemento por la pantalla —de entrar por abajo a salir por arriba— para
-    // que el recorrido dure toda la sección y no un tramo corto.
-    if (travel !== undefined) {
-      // El recorrido se mide en cada fotograma, nunca a ojo: depende del ancho
-      // de la ventana y del tamaño de la fuente, y un número fijo se queda mal
-      // en cuanto cambia cualquiera de los dos.
-      //
-      // **El texto cabe entero y barre de un borde al otro.** Se probó antes al
-      // revés —más ancho que la pantalla, desplazándose para enseñar los
-      // extremos— y no funciona: a mitad de recorrido, que es donde la frase
-      // está cómoda de leer, siempre falta una letra por cada lado. Si cabe, no
-      // hay ningún momento en que se corte.
-      // El ancho real del texto sale del `span` interior, no de `scrollWidth`:
-      // cuando el contenido cabe, `scrollWidth` se satura al ancho de la caja y
-      // el hueco sobrante siempre daría cero.
-      const line = node.firstElementChild as HTMLElement | null;
-      const slack = Math.max(0, node.clientWidth - (line?.offsetWidth ?? node.scrollWidth));
+    // La pista clavada.
+    //
+    // Mientras la pista recorre la pantalla, lo que lleva dentro va `sticky` y no
+    // se mueve: la página parece detenida y lo que avanza es la frase. El
+    // progreso es cuánto de la pista se ha consumido, y se reparte entre las
+    // palabras.
+    if (pinned) {
+      const runway = Math.max(1, rect.height - height);
+      const progress = Math.min(1, Math.max(0, -rect.top / runway));
+      const parts = pinned.parts;
 
-      // El barrido se reparte **solo mientras la frase se ve entera**: empieza
-      // cuando su borde inferior llega al fondo de la pantalla y acaba cuando el
-      // superior llega arriba. Fuera de ahí no hay nada que mirar.
-      const span = Math.max(1, height - rect.height);
-      const progress = Math.min(1, Math.max(0, (height - rect.height - rect.top) / span));
+      // Las ventanas se solapan: cada palabra tarda el doble de lo que le
+      // tocaría, así que casi siempre hay dos entrando a la vez. Sin solape se
+      // ve como un contador, a tirones, y no como una frase construyéndose.
+      const step = 1 / parts.length;
 
-      node.style.transform = `translate3d(${progress * slack * travel}px, 0, 0)`;
+      parts.forEach((part, index) => {
+        const local = (progress - index * step) / (step * 2);
+        const clamped = Math.min(1, Math.max(0, local));
+        const eased = 1 - Math.pow(1 - clamped, 3);
+
+        part.style.opacity = String(eased);
+        part.style.transform = `translate3d(0, ${(1 - eased) * 16}px, 0)`;
+      });
+
       continue;
     }
 
@@ -231,48 +233,73 @@ export function Reveal({
 }
 
 /**
- * Una línea que cruza la pantalla conforme bajas.
+ * Una frase centrada que se construye palabra a palabra con la pantalla clavada.
  *
- * Atada al scroll y no en bucle por temporizador: si paras, se para. Un bucle
- * automático al lado de unas apariciones que responden a la rueda se notaría
- * como dos páginas distintas pegadas.
+ * La pista mide algo más que una pantalla y lo de dentro va `sticky`, así que
+ * mientras la pista pasa, la página **parece detenida** y lo que avanza es la
+ * frase. Es lo que hace que la pausa tenga sentido: si la página siguiera
+ * bajando, el scroll estaría haciendo dos cosas a la vez.
  *
- * La línea cabe entera y barre de un borde al otro, así que **no se corta en
- * ningún momento del recorrido**. Va en la fuente de display y sin partir.
+ * La pausa se queda corta a propósito —poco más de una pantalla—. Clavar el
+ * scroll mucho tiempo no se siente como un efecto, se siente como que la web se
+ * ha roto.
+ *
+ * Se probó antes una línea barriendo de un lado al otro y no funcionaba: en la
+ * posición en que la frase está cómoda de leer siempre faltaba algo por un lado.
  */
-export function Drift({
-  children,
+export function PinnedWords({
+  words,
   className = '',
-  travel = 1,
 }: {
-  children: ReactNode;
+  words: string[];
   className?: string;
-  /**
-   * Fracción del hueco sobrante que se recorre. Con 1 la frase empieza pegada a
-   * la izquierda y acaba pegada a la derecha.
-   */
-  travel?: number;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const track = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
 
   useEffect(() => {
-    const node = ref.current;
+    const node = track.current;
     if (!node) return;
 
+    const parts = Array.from(node.querySelectorAll<HTMLElement>('[data-word]'));
+
+    // Quien ha pedido que no haya movimiento no debería encontrarse la página
+    // atrapada: se ve la frase entera y la pista no clava nada.
     if (reduced) {
-      node.style.transform = 'none';
+      parts.forEach((part) => {
+        part.style.opacity = '1';
+        part.style.transform = 'none';
+      });
       return;
     }
 
-    return subscribe({ node, span: 1, rise: 0, offset: 0, travel });
-  }, [reduced, travel]);
+    return subscribe({ node, span: 1, rise: 0, offset: 0, pinned: { parts } });
+  }, [reduced]);
 
   return (
-    <div className="w-full overflow-hidden">
-      <div ref={ref} className={`whitespace-nowrap will-change-transform ${className}`}>
-        {/* El `span` existe para poder medir el ancho real del texto. */}
-        <span className="inline-block">{children}</span>
+    <div
+      ref={track}
+      // Sin movimiento reducido la pista mide una pantalla y media: la media
+      // pantalla de sobra es exactamente lo que dura la pausa.
+      className={reduced ? 'relative' : 'relative h-[150svh]'}>
+      <div
+        className={`flex items-center justify-center px-6 ${
+          reduced ? '' : 'sticky top-0 h-svh'
+        }`}>
+        {/* `w-full`: como ítem flex, el párrafo crecería hasta su contenido y
+            entonces `flex-wrap` no envolvería nada — la frase se saldría por la
+            derecha en vez de partir y centrarse. */}
+        <p className={`flex w-full flex-wrap justify-center gap-x-[0.28em] ${className}`}>
+          {words.map((word, index) => (
+            <span
+              key={`${word}-${index}`}
+              data-word
+              className="inline-block will-change-transform"
+              style={{ opacity: 0 }}>
+              {word}
+            </span>
+          ))}
+        </p>
       </div>
     </div>
   );

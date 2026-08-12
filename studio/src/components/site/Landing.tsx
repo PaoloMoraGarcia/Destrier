@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 
-import { Curtain, Drift, Marquee, Reveal, SmoothScroll } from './motion';
+import { Curtain, Marquee, PinnedWords, Reveal, SmoothScroll } from './motion';
 import { Nav } from './Nav';
 import { Band, Cta, Label, Statement } from './pieces';
 
@@ -54,12 +54,13 @@ export function Landing() {
             eslogan ni entradilla, que es lo más minimalista que puede ser sin
             dejar de decir cómo se llama.
         --------------------------------------------------------------- */}
-        {/* El `padding-top` solo libra la nav; el aire visible bajo ella lo pone
-            el margen del propio wordmark, que sabe dónde está su tinta. */}
-        <Band tone="bone" className="@container pt-16 sm:pt-[4.5rem]">
+        {/* El `padding-top` solo libra la nav —40 px de burbuja más 12 de filo—;
+            el aire visible bajo ella lo pone el margen del propio wordmark, que
+            sabe dónde está su tinta. */}
+        <Band tone="bone" className="@container pt-[3.25rem]">
           {/* Sin margen lateral: la palabra toca los dos bordes, que es de
               donde sale toda la fuerza de la portada de la referencia. */}
-          <h1 className="wordmark-hero mt-[calc(1.75rem-var(--ink-top))]">bi&amp;hapia</h1>
+          <h1 className="wordmark-hero mt-[calc(0.75rem-var(--ink-top))]">bi&amp;hapia</h1>
 
           {/*
             El vídeo va en 4K y pesa lo que pesa, así que el `poster` no es un
@@ -87,23 +88,24 @@ export function Landing() {
         {/* ---------------------------------------------------------------
             La idea
         --------------------------------------------------------------- */}
-        <Band tone="ink" id="idea" className="@container py-32 sm:py-48">
+        <Band tone="ink" id="idea" className="@container pt-32 sm:pt-48">
           <Label className="mb-24 px-6 text-center">01 — La idea</Label>
 
           {/*
             Maciza y no en hueco: la regla del contorno es del wordmark
             `bi&hapia`, no de todo el texto de la marca.
+
+            Centrada y con la pantalla clavada: cada palabra entra cuando el
+            scroll llega a su punto.
           */}
-          {/* Tres palabras y enorme, pero cabiendo: a 9cqw ocupa alrededor del
-              85 % del ancho —medido, no estimado—, y ese 15 % sobrante es lo que
-              barre al bajar. Nunca se corta una letra. */}
-          <Drift className="font-[family-name:var(--font-wordmark)] text-[9cqw] leading-[0.9] tracking-[-0.03em]">
-            Nothing to chase
-          </Drift>
+          <PinnedWords
+            words={['Nothing', 'to', 'chase']}
+            className="text-center font-[family-name:var(--font-wordmark)] text-[clamp(3rem,11vw,9rem)] leading-[0.92] tracking-[-0.03em]"
+          />
 
           <Marquee
             text="bihapia"
-            className="mt-28 font-mono text-[11px] uppercase tracking-[0.3em] opacity-40"
+            className="pb-32 font-mono text-[11px] uppercase tracking-[0.3em] opacity-40 sm:pb-48"
           />
         </Band>
 

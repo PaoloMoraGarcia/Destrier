@@ -105,20 +105,20 @@ La sección oscura la ocupa **una sola línea que barre la pantalla al bajar**,
 se para. Un bucle por temporizador al lado de unas apariciones que responden a la
 rueda se notaría como dos páginas distintas pegadas.
 
-**La frase cabe entera —ocupa el 85 % del ancho— y barre el 15 % sobrante.** Se
-probó al revés, más ancha que la pantalla y desplazándose para enseñar los
-extremos, y no funciona: a mitad de recorrido, que es justo donde la frase está
-cómoda de leer, siempre falta una letra por cada lado. Acortar la frase no lo
-arregla, porque el problema es la proporción, no la longitud.
+**La sección se clava y la frase se construye palabra a palabra.** La pista mide
+una pantalla y media y lo de dentro va `sticky`, así que mientras pasa, la página
+parece detenida y lo que avanza es la frase. La pausa se queda corta a propósito:
+clavar el scroll mucho rato no se siente como un efecto, se siente como que la
+web se ha roto.
 
-Dos detalles que costaron encontrar:
+Antes se probó una línea barriendo de un lado al otro y no funcionaba. Ni
+ensanchándola ni acortándola: en la posición en que la frase está cómoda de leer
+siempre faltaba algo por un lado. El problema era pedirle al scroll dos cosas a
+la vez —bajar la página y mover el texto—; clavando la página solo hace una.
 
-- El recorrido se reparte **solo mientras la frase se ve entera** —de que su
-  borde inferior llegue al fondo a que el superior llegue arriba—. Repartido por
-  toda la travesía, el tramo legible caía siempre en la mitad del movimiento.
-- El ancho real del texto sale de un `span` interior, **no de `scrollWidth`**:
-  cuando el contenido cabe, `scrollWidth` se satura al ancho de la caja y el
-  hueco sobrante siempre da cero.
+Con `prefers-reduced-motion` **no se clava nada**: la pista se colapsa y la frase
+se ve entera. Atrapar el scroll a quien ha pedido que no haya movimiento sería lo
+contrario de lo que pide.
 
 Lo que **no** se tomó: la paleta —aquí es hueso, tinta y ámbar— ni el wordmark
 macizo. El nuestro va en hueco incluso en la portada, porque esa es la regla de
@@ -278,6 +278,14 @@ Cuatro cosas que solo se rompían en navegador y que ya están arregladas:
   **dos mitades, cada una de al menos el ancho de la ventana**, y el 50 % de
   desplazamiento empalma solo. El mínimo va en `vw` y no en `%`: la pista es
   `w-max`, así que un `100%` se resolvería contra ella misma.
+- **`backdrop-filter` escrito a mano no llega a aplicarse.** El compilador de
+  Tailwind v4 se quedó solo con la versión con prefijo —comprobado leyendo el CSS
+  servido— y el valor calculado salía `none`: las burbujas eran un cristal sin
+  cristal. Va con las utilidades (`@apply backdrop-blur-xl backdrop-saturate-150`),
+  que rellenan la cadena de variables que el propio Tailwind espera.
+- **Un párrafo dentro de un contenedor flex crece hasta su contenido**, así que
+  `flex-wrap` no envuelve nada y el texto se sale por la derecha en vez de partir
+  y centrarse. Necesita `w-full`.
 - **La caja de una línea de texto no es donde está su tinta.** Con
   `line-height` menor que 1, en el wordmark la "b" empieza 0.0622 em por debajo
   del borde superior y el rabo de la "p" sale 0.0892 em por debajo del inferior.

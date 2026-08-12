@@ -101,6 +101,40 @@ body {
   margin-bottom: var(--ink-bottom);
 }
 
+/*
+ * La burbuja de cristal.
+ *
+ * **El único sitio del CSS que sabe qué es "cristal"**, igual que en la app
+ * ninguna pantalla importa `BlurView` directamente: si mañana cambia el
+ * material, cambia aquí y en ningún otro archivo.
+ *
+ * En web no existe Liquid Glass nativo, así que esto es el mismo fallback que
+ * usa `GlassSurface` cuando no hay material del sistema: desenfoque, un velo, y
+ * un filo especular de 1 px. El filo no es decoración — sin él un blur se lee
+ * como "capa borrosa" y no como cristal.
+ *
+ * **El velo claro es obligatorio, no una preferencia estética.** Estas burbujas
+ * pasan por encima del vídeo oscuro, y el material toma su claridad de lo que
+ * tiene detrás: con cristal transparente, el texto en tinta desaparecería justo
+ * ahí. La app tropezó con lo mismo al revés y la nota está en `GlassSurface.tsx`.
+ */
+.bubble {
+  /*
+   * El desenfoque va por las utilidades de Tailwind y no con `backdrop-filter`
+   * a mano: escrito a mano, el compilador se queda solo con la versión con
+   * prefijo y esa no llega a aplicarse — comprobado leyendo el CSS servido, que
+   * traía únicamente `-webkit-backdrop-filter`, y el valor calculado salía
+   * `none`. Las burbujas eran un cristal sin cristal.
+   */
+  @apply backdrop-blur-xl backdrop-saturate-150;
+
+  background: color-mix(in srgb, var(--color-canvas) 72%, transparent);
+  border: 1px solid color-mix(in srgb, white 55%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 65%, transparent),
+    0 6px 20px rgb(10 10 10 / 0.12);
+}
+
 @keyframes bh-marquee {
   from {
     transform: translate3d(0, 0, 0);
