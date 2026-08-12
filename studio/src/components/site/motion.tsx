@@ -260,14 +260,11 @@ export function PinnedWords({
   words,
   className = '',
   label,
-  intro,
 }: {
   words: string[];
   className?: string;
   /** Etiqueta pequeña de la sección. Va dentro del clavado, no fuera. */
   label?: ReactNode;
-  /** Entradilla fija, sin animación. */
-  intro?: ReactNode;
 }) {
   const track = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
@@ -297,25 +294,23 @@ export function PinnedWords({
       // Sin movimiento reducido la pista mide una pantalla y media: la media
       // pantalla de sobra es exactamente lo que dura la pausa.
       className={reduced ? 'relative' : 'relative h-[150svh]'}>
+      {/*
+        Arriba y no centrada.
+        Centrada dejaba media pantalla de negro entre el vídeo y la frase. Pegada
+        al principio de la pista, la frase entra justo detrás del vídeo y ese
+        hueco desaparece sin tener que inventarse nada que meter dentro.
+      */}
       <div
-        className={`flex flex-col items-center justify-center px-6 ${
-          reduced ? '' : 'sticky top-0 h-svh'
+        className={`flex flex-col items-center px-6 ${
+          reduced ? '' : 'sticky top-0 h-svh justify-start pt-[10svh]'
         }`}>
         {/*
-          La etiqueta y la entradilla van **dentro** del clavado y **sin
-          animación**: se ven durante toda la pausa, así que el tramo antes de
-          que la frase se complete deja de ser una pantalla vacía. Fuera del
-          clavado se irían justo cuando más falta hacen.
+          La etiqueta va **dentro** del clavado y **sin animación**: se ve
+          durante toda la pausa. Fuera se iría justo cuando más falta hace.
         */}
         {label && (
           <p className="mb-8 font-mono text-[11px] uppercase tracking-[0.28em] opacity-45">
             {label}
-          </p>
-        )}
-
-        {intro && (
-          <p className="mb-6 font-serif text-[clamp(1.1rem,2.4vw,1.7rem)] uppercase tracking-[0.02em] opacity-55">
-            {intro}
           </p>
         )}
 

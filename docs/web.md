@@ -122,6 +122,12 @@ palabras a opacidad 0 justo al engancharse el clavado — y lo mismo al volver a
 subir. Ahora, para cuando la página se detiene, la primera palabra ya está
 dentro.
 
+**Y la frase va arriba, no centrada.** Centrada dejaba media pantalla de negro
+entre el vídeo y el texto. Pegada al principio de la pista —que empieza justo
+donde acaba el vídeo, sin relleno de por medio— la frase entra detrás del vídeo y
+ese hueco desaparece. Se probó antes rellenarlo con una entradilla; sobra en
+cuanto el hueco no existe.
+
 Con `prefers-reduced-motion` **no se clava nada**: la pista se colapsa y la frase
 se ve entera. Atrapar el scroll a quien ha pedido que no haya movimiento sería lo
 contrario de lo que pide.
@@ -309,6 +315,10 @@ Cuatro cosas que solo se rompían en navegador y que ya están arregladas:
   `flex-wrap` no envuelve nada y el texto se sale por la derecha en vez de partir
   y centrarse. Necesita `w-full`. Le pasó lo mismo a la nav dentro del marco:
   medía 531 px de 1440 y las columnas no repartían nada.
+- **Una sombra proyectada permanente bajo una pastilla translúcida se lee como
+  pegatina recortada, no como cristal.** En reposo la burbuja solo lleva el filo
+  especular de arriba, que sí es parte del material; la sombra entra al pasar el
+  cursor, donde además dice algo — que la pieza se puede pulsar.
 - **Un velo del color del lienzo desaparece sobre el lienzo.** La burbuja teñida
   con `--color-canvas` componía sobre el hueso exactamente el mismo color: cero
   diferencia, solo la separaba la sombra. El velo es **blanco**, así que siempre

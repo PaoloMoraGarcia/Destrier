@@ -2,14 +2,14 @@
 
 import Link from 'next/link';
 
-import { EASE } from './motion';
-
 /**
- * La navegación, dentro del marco negro de la portada.
+ * La navegación, en la franja de arriba de la portada.
  *
  * No va fija: es parte de la portada y se va al bajar, igual que el vídeo. Eso
- * es lo que hace simétrico el gesto —negro al ras del asta arriba, vídeo al ras
- * del rabo abajo— y deja limpio el scroll.
+ * deja limpio el scroll.
+ *
+ * Las burbujas no llevan sombra en reposo ni estado de `hover` aquí: el
+ * material entero, incluido lo que pasa al pasar el cursor, vive en `.bubble`.
  *
  * **Tres columnas y no `justify-between`.** Con `justify-between` los enlaces
  * quedarían centrados *entre* el logo y el botón, y como esos dos no miden lo
@@ -44,8 +44,7 @@ export function Nav() {
           <a
             key={link.href}
             href={link.href}
-            className="bubble hidden rounded-full px-5 py-2.5 text-sm text-[#0a0a0a] hover:brightness-[1.06] sm:block"
-            style={{ transition: `filter 400ms ${EASE}` }}>
+            className="bubble hidden rounded-full px-5 py-2.5 text-sm text-[#0a0a0a] sm:block">
             {link.label}
           </a>
         ))}
@@ -53,8 +52,7 @@ export function Nav() {
 
       <Link
         href="/entrar"
-        className="bubble flex items-center gap-3 justify-self-end rounded-full py-1.5 pl-5 pr-1.5 text-sm text-[#0a0a0a] hover:brightness-[1.06]"
-        style={{ transition: `filter 400ms ${EASE}` }}>
+        className="bubble flex items-center gap-3 justify-self-end rounded-full py-1.5 pl-5 pr-1.5 text-sm text-[#0a0a0a]">
         <span>Publicar</span>
         <span className="grid size-7 place-items-center rounded-full bg-[#0a0a0a]" aria-hidden>
           <svg width="11" height="9" viewBox="0 0 13 11" fill="none">

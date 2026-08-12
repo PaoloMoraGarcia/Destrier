@@ -104,10 +104,9 @@ export function Landing() {
         {/* ---------------------------------------------------------------
             La idea
         --------------------------------------------------------------- */}
-        {/* Relleno corto y etiqueta pegada a la frase: lo que sobraba aquí se
-            veía como un tramo largo de negro vacío antes de que apareciera
-            nada. */}
-        <Band tone="ink" id="idea" className="@container pt-20 sm:pt-28">
+        {/* Sin relleno arriba: la frase arranca justo detrás del vídeo. Todo lo
+            que se pusiera aquí sería negro vacío antes de que apareciera nada. */}
+        <Band tone="ink" id="idea" className="@container">
           {/*
             Maciza y no en hueco: la regla del contorno es del wordmark
             `bi&hapia`, no de todo el texto de la marca.
@@ -118,7 +117,6 @@ export function Landing() {
           */}
           <PinnedWords
             label="01 — La idea"
-            intro="Our motto"
             words={['Nothing', 'to', 'chase']}
             className="text-center font-[family-name:var(--font-wordmark)] text-[clamp(3rem,11vw,9rem)] leading-[0.92] tracking-[-0.03em]"
           />
