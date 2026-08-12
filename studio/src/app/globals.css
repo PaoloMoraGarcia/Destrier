@@ -82,6 +82,23 @@ body {
   /* En `em` para que el grosor acompañe al tamaño: fijo en píxeles
      desaparecería en un monitor grande y engordaría en un móvil. */
   -webkit-text-stroke: 0.013em var(--color-ink);
+
+  /*
+   * La caja de la línea no es donde está la tinta.
+   *
+   * Con `line-height` menor que 1, la "b" empieza 0.0622em **por debajo** del
+   * borde superior de la caja y el rabo de la "p" sale 0.0892em **por debajo**
+   * del inferior. Medido con `measureText`, no estimado.
+   *
+   * Por eso separar esto con `mt`/`pt` no funciona: se ajusta la caja y lo que
+   * se ve es la tinta. Estos dos márgenes cancelan esa diferencia, y van en
+   * `em` para que la cancelación valga a cualquier tamaño de pantalla.
+   */
+  --ink-top: 0.0622em;
+  --ink-bottom: 0.0892em;
+
+  /* El rabo de la "p" queda tocando lo que venga debajo. */
+  margin-bottom: var(--ink-bottom);
 }
 
 @keyframes bh-marquee {

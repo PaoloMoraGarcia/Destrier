@@ -100,15 +100,25 @@ casi nuestra pila, así que se pudo reproducir de verdad y no de aproximación:
 - Bloques de color a sangre, etiqueta pequeña y frase enorme de medida estrecha,
   marquesina, rejilla de tres y cierre con esquinas redondeadas sobre el pie.
 
-La sección oscura la ocupa **una sola línea que cruza la pantalla al bajar**,
-`Nothing to catch up on`, en `Drift`. Va atada al scroll como todo lo demás: si
-paras, se para. Un bucle por temporizador al lado de unas apariciones que
-responden a la rueda se notaría como dos páginas distintas pegadas.
+La sección oscura la ocupa **una sola línea que barre la pantalla al bajar**,
+`Nothing to chase`, en `Drift`. Va atada al scroll como todo lo demás: si paras,
+se para. Un bucle por temporizador al lado de unas apariciones que responden a la
+rueda se notaría como dos páginas distintas pegadas.
 
-El recorrido **se mide en cada fotograma** contra lo que el texto sobresale del
-contenedor. Con un número fijo, al cambiar el ancho de la ventana o el tamaño de
-la fuente el final de la frase no llegaba a salir nunca — que es exactamente lo
-que pasó con el valor puesto a ojo.
+**La frase cabe entera —ocupa el 85 % del ancho— y barre el 15 % sobrante.** Se
+probó al revés, más ancha que la pantalla y desplazándose para enseñar los
+extremos, y no funciona: a mitad de recorrido, que es justo donde la frase está
+cómoda de leer, siempre falta una letra por cada lado. Acortar la frase no lo
+arregla, porque el problema es la proporción, no la longitud.
+
+Dos detalles que costaron encontrar:
+
+- El recorrido se reparte **solo mientras la frase se ve entera** —de que su
+  borde inferior llegue al fondo a que el superior llegue arriba—. Repartido por
+  toda la travesía, el tramo legible caía siempre en la mitad del movimiento.
+- El ancho real del texto sale de un `span` interior, **no de `scrollWidth`**:
+  cuando el contenido cabe, `scrollWidth` se satura al ancho de la caja y el
+  hueco sobrante siempre da cero.
 
 Lo que **no** se tomó: la paleta —aquí es hueso, tinta y ámbar— ni el wordmark
 macizo. El nuestro va en hueco incluso en la portada, porque esa es la regla de
@@ -261,6 +271,19 @@ Cuatro cosas que solo se rompían en navegador y que ya están arregladas:
   `white-space: nowrap`, y no solo por estética.
 - **El marquee se animaba dos veces**, en el contenedor y en la pista. La pista
   es la única que se mueve; el contenedor solo recorta.
+- **La cinta se quedaba sin texto por ser más corta que pantalla y media.** Con
+  12 copias medía 1866 px y al desplazarse el 50 % hacía falta cubrir hasta
+  2364 en una ventana de 1440: el último tercio salía vacío. Poner más copias a
+  ojo no vale, porque el número correcto depende del ancho de la ventana. Van
+  **dos mitades, cada una de al menos el ancho de la ventana**, y el 50 % de
+  desplazamiento empalma solo. El mínimo va en `vw` y no en `%`: la pista es
+  `w-max`, así que un `100%` se resolvería contra ella misma.
+- **La caja de una línea de texto no es donde está su tinta.** Con
+  `line-height` menor que 1, en el wordmark la "b" empieza 0.0622 em por debajo
+  del borde superior y el rabo de la "p" sale 0.0892 em por debajo del inferior.
+  Ajustar la separación con `mt`/`pt` es ajustar la caja mientras se mira la
+  tinta; los dos márgenes de `.wordmark-hero` cancelan esa diferencia, en `em`
+  para que valga a cualquier tamaño. Los números salen de `measureText`.
 
 ### Trampas del panel, encontradas rompiéndolo
 

@@ -115,15 +115,28 @@ function paintAll() {
     // elemento por la pantalla —de entrar por abajo a salir por arriba— para
     // que el recorrido dure toda la sección y no un tramo corto.
     if (travel !== undefined) {
-      // El recorrido es exactamente lo que sobresale del contenedor, medido en
-      // cada fotograma. Con un número fijo, al cambiar el ancho de la ventana o
-      // el tamaño de la fuente el final de la frase se queda sin salir nunca —
-      // que es justo lo que pasaba con el valor puesto a ojo.
-      const overflow = Math.max(0, node.scrollWidth - node.clientWidth);
-      const crossing = (height - rect.top) / (height + rect.height);
-      const progress = Math.min(1, Math.max(0, crossing));
+      // El recorrido se mide en cada fotograma, nunca a ojo: depende del ancho
+      // de la ventana y del tamaño de la fuente, y un número fijo se queda mal
+      // en cuanto cambia cualquiera de los dos.
+      //
+      // **El texto cabe entero y barre de un borde al otro.** Se probó antes al
+      // revés —más ancho que la pantalla, desplazándose para enseñar los
+      // extremos— y no funciona: a mitad de recorrido, que es donde la frase
+      // está cómoda de leer, siempre falta una letra por cada lado. Si cabe, no
+      // hay ningún momento en que se corte.
+      // El ancho real del texto sale del `span` interior, no de `scrollWidth`:
+      // cuando el contenido cabe, `scrollWidth` se satura al ancho de la caja y
+      // el hueco sobrante siempre daría cero.
+      const line = node.firstElementChild as HTMLElement | null;
+      const slack = Math.max(0, node.clientWidth - (line?.offsetWidth ?? node.scrollWidth));
 
-      node.style.transform = `translate3d(${-progress * overflow * travel}px, 0, 0)`;
+      // El barrido se reparte **solo mientras la frase se ve entera**: empieza
+      // cuando su borde inferior llega al fondo de la pantalla y acaba cuando el
+      // superior llega arriba. Fuera de ahí no hay nada que mirar.
+      const span = Math.max(1, height - rect.height);
+      const progress = Math.min(1, Math.max(0, (height - rect.height - rect.top) / span));
+
+      node.style.transform = `translate3d(${progress * slack * travel}px, 0, 0)`;
       continue;
     }
 
@@ -224,9 +237,8 @@ export function Reveal({
  * automático al lado de unas apariciones que responden a la rueda se notaría
  * como dos páginas distintas pegadas.
  *
- * La línea tiene que ser **más ancha que la pantalla** para que el recorrido
- * signifique algo; de ahí que vaya en la fuente de display, que es muy
- * expandida, y sin partir.
+ * La línea cabe entera y barre de un borde al otro, así que **no se corta en
+ * ningún momento del recorrido**. Va en la fuente de display y sin partir.
  */
 export function Drift({
   children,
@@ -236,8 +248,8 @@ export function Drift({
   children: ReactNode;
   className?: string;
   /**
-   * Fracción de lo que sobresale que se recorre. Con 1 la frase empieza
-   * alineada a la izquierda y acaba enseñando su último carácter.
+   * Fracción del hueco sobrante que se recorre. Con 1 la frase empieza pegada a
+   * la izquierda y acaba pegada a la derecha.
    */
   travel?: number;
 }) {
@@ -259,7 +271,8 @@ export function Drift({
   return (
     <div className="w-full overflow-hidden">
       <div ref={ref} className={`whitespace-nowrap will-change-transform ${className}`}>
-        {children}
+        {/* El `span` existe para poder medir el ancho real del texto. */}
+        <span className="inline-block">{children}</span>
       </div>
     </div>
   );
@@ -268,8 +281,21 @@ export function Drift({
 /**
  * La marquesina.
  *
- * El contenido va duplicado y se desplaza justo la mitad, que es lo que hace
- * que el bucle no tenga costura. Se para con `prefers-reduced-motion`.
+ * Dos mitades idénticas, **cada una de al menos el ancho del contenedor**, y un
+ * desplazamiento de justo el 50 %: al llegar al final, la segunda mitad está
+ * exactamente donde empezó la primera y el bucle empalma sin costura.
+ *
+ * Que cada mitad cubra la ventana es la pieza que importa, y por no tenerlo la
+ * cinta se quedaba sin texto: con un número fijo de copias la pista medía menos
+ * que pantalla y media, así que a mitad del recorrido el último tercio quedaba
+ * vacío. El número de copias que hace falta depende del ancho de la ventana, y
+ * por eso no se puede acertar poniéndolo a mano.
+ *
+ * El ancho mínimo va en `vw` y no en `%`: la pista es `w-max`, así que un `100%`
+ * se resolvería contra ella misma y se mordería la cola. La cinta es siempre de
+ * ancho completo, y lo que sobre lo recorta el contenedor.
+ *
+ * Se para con `prefers-reduced-motion`.
  */
 export function Marquee({
   text,
@@ -281,7 +307,18 @@ export function Marquee({
   seconds?: number;
 }) {
   const reduced = useReducedMotion();
-  const repeats = 6;
+
+  // `justify-around` reparte las copias por todo el ancho de la mitad, así que
+  // el espaciado se mantiene aunque `min-w-full` la estire.
+  const half = (
+    <div className="flex min-w-[100vw] shrink-0 items-center justify-around">
+      {Array.from({ length: 7 }).map((_, index) => (
+        <span key={index} className="px-8">
+          {text}
+        </span>
+      ))}
+    </div>
+  );
 
   return (
     <div className={`w-full overflow-hidden ${className}`}>
@@ -292,11 +329,8 @@ export function Marquee({
             ? undefined
             : ({ animation: `bh-marquee ${seconds}s linear infinite` } as CSSProperties)
         }>
-        {Array.from({ length: repeats * 2 }).map((_, index) => (
-          <span key={index} className="px-8">
-            {text}
-          </span>
-        ))}
+        {half}
+        {half}
       </div>
     </div>
   );

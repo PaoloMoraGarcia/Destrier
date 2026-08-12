@@ -54,10 +54,12 @@ export function Landing() {
             eslogan ni entradilla, que es lo más minimalista que puede ser sin
             dejar de decir cómo se llama.
         --------------------------------------------------------------- */}
-        <Band tone="bone" className="@container pt-24 sm:pt-28">
+        {/* El `padding-top` solo libra la nav; el aire visible bajo ella lo pone
+            el margen del propio wordmark, que sabe dónde está su tinta. */}
+        <Band tone="bone" className="@container pt-16 sm:pt-[4.5rem]">
           {/* Sin margen lateral: la palabra toca los dos bordes, que es de
               donde sale toda la fuerza de la portada de la referencia. */}
-          <h1 className="wordmark-hero">bi&amp;hapia</h1>
+          <h1 className="wordmark-hero mt-[calc(1.75rem-var(--ink-top))]">bi&amp;hapia</h1>
 
           {/*
             El vídeo va en 4K y pesa lo que pesa, así que el `poster` no es un
@@ -67,7 +69,7 @@ export function Landing() {
             Silenciado por obligación, no por gusto: los navegadores prohíben
             autoreproducir con sonido sin interacción previa.
           */}
-          <div className="mt-10 h-[46svh] w-full sm:h-[62svh]">
+          <div className="h-[46svh] w-full sm:h-[62svh]">
             <video
               src="/video/portada.mp4"
               poster="/video/portada-poster.jpg"
@@ -85,15 +87,18 @@ export function Landing() {
         {/* ---------------------------------------------------------------
             La idea
         --------------------------------------------------------------- */}
-        <Band tone="ink" id="idea" className="py-32 sm:py-48">
+        <Band tone="ink" id="idea" className="@container py-32 sm:py-48">
           <Label className="mb-24 px-6 text-center">01 — La idea</Label>
 
           {/*
             Maciza y no en hueco: la regla del contorno es del wordmark
             `bi&hapia`, no de todo el texto de la marca.
           */}
-          <Drift className="font-[family-name:var(--font-wordmark)] text-[clamp(3.2rem,11vw,9rem)] leading-[0.9] tracking-[-0.02em]">
-            Nothing to catch up on
+          {/* Tres palabras y enorme, pero cabiendo: a 9cqw ocupa alrededor del
+              85 % del ancho —medido, no estimado—, y ese 15 % sobrante es lo que
+              barre al bajar. Nunca se corta una letra. */}
+          <Drift className="font-[family-name:var(--font-wordmark)] text-[9cqw] leading-[0.9] tracking-[-0.03em]">
+            Nothing to chase
           </Drift>
 
           <Marquee
