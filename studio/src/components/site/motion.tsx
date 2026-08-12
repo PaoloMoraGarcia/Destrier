@@ -259,9 +259,15 @@ export function Reveal({
 export function PinnedWords({
   words,
   className = '',
+  label,
+  intro,
 }: {
   words: string[];
   className?: string;
+  /** Etiqueta pequeña de la sección. Va dentro del clavado, no fuera. */
+  label?: ReactNode;
+  /** Entradilla fija, sin animación. */
+  intro?: ReactNode;
 }) {
   const track = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
@@ -292,9 +298,27 @@ export function PinnedWords({
       // pantalla de sobra es exactamente lo que dura la pausa.
       className={reduced ? 'relative' : 'relative h-[150svh]'}>
       <div
-        className={`flex items-center justify-center px-6 ${
+        className={`flex flex-col items-center justify-center px-6 ${
           reduced ? '' : 'sticky top-0 h-svh'
         }`}>
+        {/*
+          La etiqueta y la entradilla van **dentro** del clavado y **sin
+          animación**: se ven durante toda la pausa, así que el tramo antes de
+          que la frase se complete deja de ser una pantalla vacía. Fuera del
+          clavado se irían justo cuando más falta hacen.
+        */}
+        {label && (
+          <p className="mb-8 font-mono text-[11px] uppercase tracking-[0.28em] opacity-45">
+            {label}
+          </p>
+        )}
+
+        {intro && (
+          <p className="mb-6 font-serif text-[clamp(1.1rem,2.4vw,1.7rem)] uppercase tracking-[0.02em] opacity-55">
+            {intro}
+          </p>
+        )}
+
         {/* `w-full`: como ítem flex, el párrafo crecería hasta su contenido y
             entonces `flex-wrap` no envolvería nada — la frase se saldría por la
             derecha en vez de partir y centrarse. */}

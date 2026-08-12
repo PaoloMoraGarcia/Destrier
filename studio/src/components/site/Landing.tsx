@@ -58,13 +58,11 @@ export function Landing() {
             entre los dos.
         --------------------------------------------------------------- */}
         <Band tone="bone" className="@container">
-          {/* El marco lleva la nav centrada verticalmente, con el mismo aire
-              arriba y abajo, que es lo que fija su altura.
-
-              Blanco puro y no el hueso del lienzo: contra `#f0f0ec` el blanco
-              se distingue, y así el marco sigue leyéndose como una franja que
-              cierra al ras del asta. Del mismo color no habría marco. */}
-          <div className="flex h-[5.5rem] items-center bg-white">
+          {/* La franja es del color del lienzo, así que no se ve como banda: lo
+              que hace es reservar el alto y dejar la nav centrada en él, con el
+              mismo aire arriba y abajo. El filo sigue cayendo al ras del asta,
+              aunque ahora no haya cambio de color que lo señale. */}
+          <div className="flex h-[5.5rem] items-center">
             <Nav />
           </div>
 
@@ -110,16 +108,17 @@ export function Landing() {
             veía como un tramo largo de negro vacío antes de que apareciera
             nada. */}
         <Band tone="ink" id="idea" className="@container pt-20 sm:pt-28">
-          <Label className="mb-10 px-6 text-center">01 — La idea</Label>
-
           {/*
             Maciza y no en hueco: la regla del contorno es del wordmark
             `bi&hapia`, no de todo el texto de la marca.
 
             Centrada y con la pantalla clavada: cada palabra entra cuando el
-            scroll llega a su punto.
+            scroll llega a su punto. La etiqueta y la entradilla van dentro y
+            sin animación, para que el tramo previo no sea negro vacío.
           */}
           <PinnedWords
+            label="01 — La idea"
+            intro="Our motto"
             words={['Nothing', 'to', 'chase']}
             className="text-center font-[family-name:var(--font-wordmark)] text-[clamp(3rem,11vw,9rem)] leading-[0.92] tracking-[-0.03em]"
           />

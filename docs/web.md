@@ -309,10 +309,13 @@ Cuatro cosas que solo se rompían en navegador y que ya están arregladas:
   `flex-wrap` no envuelve nada y el texto se sale por la derecha en vez de partir
   y centrarse. Necesita `w-full`. Le pasó lo mismo a la nav dentro del marco:
   medía 531 px de 1440 y las columnas no repartían nada.
-- **Sobre el marco blanco, las burbujas casi no se ven**: el cristal claro sobre
-  blanco da **1,1 : 1** de contraste, así que lo único que las separa del fondo es
-  la sombra. El texto sí se lee (17,97 : 1). Si hiciera falta que la burbuja se
-  leyera como pieza, hay que teñirla, no subirle la opacidad.
+- **Un velo del color del lienzo desaparece sobre el lienzo.** La burbuja teñida
+  con `--color-canvas` componía sobre el hueso exactamente el mismo color: cero
+  diferencia, solo la separaba la sombra. El velo es **blanco**, así que siempre
+  queda un punto más clara que lo que tenga detrás. Sobre hueso pasa de 0 a 11
+  niveles de diferencia; el ratio WCAG sigue siendo 1,1 porque no sirve para
+  medir dos casi-blancos, pero el filo se ve. El texto va sobrado en los dos
+  fondos: 19,1 : 1 sobre hueso y 10,0 : 1 sobre el vídeo.
 - **La caja de una línea de texto no es donde está su tinta.** Con
   `line-height` menor que 1, en el wordmark la "b" empieza 0.0622 em por debajo
   del borde superior y el rabo de la "p" sale 0.0892 em por debajo del inferior.

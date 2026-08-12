@@ -128,8 +128,16 @@ body {
    */
   @apply backdrop-blur-xl backdrop-saturate-150;
 
-  background: color-mix(in srgb, var(--color-canvas) 72%, transparent);
-  border: 1px solid color-mix(in srgb, white 55%, transparent);
+  /*
+   * El velo es **blanco**, no del color del lienzo.
+   *
+   * Teñido con el lienzo, sobre el propio lienzo la burbuja componía exactamente
+   * el mismo color y desaparecía: solo la separaba la sombra. En blanco queda
+   * siempre un punto más clara que lo que tenga detrás —hueso o vídeo— y se lee
+   * como pieza en los dos sitios.
+   */
+  background: color-mix(in srgb, white 72%, transparent);
+  border: 1px solid color-mix(in srgb, white 65%, transparent);
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, white 65%, transparent),
     0 6px 20px rgb(10 10 10 / 0.12);
