@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { IBM_Plex_Mono, Instrument_Serif, Special_Gothic_Expanded_One } from 'next/font/google';
+import { IBM_Plex_Mono, Special_Gothic_Expanded_One } from 'next/font/google';
 
 import './globals.css';
 
@@ -15,18 +15,14 @@ const plexMono = IBM_Plex_Mono({
   variable: '--font-plex-mono',
 });
 
-/**
- * La tercera voz, solo para las frases grandes de la landing.
+/*
+ * Dos voces y no tres.
  *
- * La referencia vive de la tensión entre una sans neutra y una serif editorial;
- * sin esa segunda voz la maqueta se sostiene pero pierde el carácter. Un solo
- * peso, y no toca ni el wordmark ni las monoespaciadas.
+ * Hubo aquí una serif editorial para las frases grandes de la landing. Se quitó:
+ * la marca funciona con la de display para lo grande y la monoespaciada para
+ * etiquetas y datos, y una tercera no encajaba. Se retira también la carga de la
+ * fuente — tenerla descargándose sin usarla es peso en cada visita.
  */
-const instrument = Instrument_Serif({
-  weight: '400',
-  subsets: ['latin'],
-  variable: '--font-instrument',
-});
 
 export const metadata: Metadata = {
   title: 'Bihapia Studio',
@@ -50,7 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     // y todo cae a la fuente del sistema sin avisar.
     <html
       lang="es"
-      className={`${gothic.variable} ${plexMono.variable} ${instrument.variable}`}>
+      className={`${gothic.variable} ${plexMono.variable}`}>
       <body className="antialiased">{children}</body>
     </html>
   );

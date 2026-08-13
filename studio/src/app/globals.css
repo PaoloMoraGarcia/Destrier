@@ -54,10 +54,6 @@ body {
  * La landing
  * ------------------------------------------------------------------------ */
 
-@theme {
-  --font-serif: var(--font-instrument), Georgia, serif;
-}
-
 /*
  * El wordmark de la portada, a lo ancho del viewport y en hueco.
  *

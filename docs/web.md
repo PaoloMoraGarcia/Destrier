@@ -152,9 +152,11 @@ Lo que **no** se tomó: la paleta —aquí es hueso, tinta y ámbar— ni el wor
 macizo. El nuestro va en hueco incluso en la portada, porque esa es la regla de
 la marca y no se rompe por parecerse más a la referencia.
 
-**Instrument Serif** entra solo para las frases grandes: la referencia vive de la
-tensión sans/serif y sin una segunda voz la maqueta se sostiene pero pierde el
-carácter. El wordmark y las monoespaciadas no se tocan.
+**Dos tipografías, no tres.** Hubo una serif editorial para las frases grandes,
+imitando la tensión sans/serif de la referencia. Se quitó: la marca funciona con
+la de display para lo grande y IBM Plex Mono para etiquetas y datos, y la tercera
+voz no encajaba. La fuente se retiró también del proyecto — descargándose sin
+usarse era peso en cada visita.
 
 #### El vídeo de portada
 
@@ -169,13 +171,23 @@ Retina —la hierba y los guijarros pierden definición—, así que se descart�
 Lleva `poster`, y no es un adorno: con 37 MB, sin él la portada arranca con un
 rectángulo negro. Y va silenciado por obligación, no por gusto.
 
-#### Las fotos son provisionales
+#### Solo una sección clava la pantalla
 
-Son de archivo, de una reunión de equipo. Sirven para juzgar maqueta y
-movimiento, pero **no dicen nada de la tesis**: no hay un móvil, ni vídeo
-vertical, ni nadie mirando nada. Están en la sección de creadores, que es donde
-menos desentonan. Los másteres pesados quedan en `Images/`; en `public/fotos/`
-van reducidas a 2200 px.
+La 01. Las demás usan la misma aparición palabra a palabra pero **sin detener la
+página**: tres pausas seguidas en una misma bajada dejan de leerse como efecto y
+empiezan a leerse como que la web no responde. Lo gobierna la opción `pin` de
+`PinnedWords`, sobre el mismo bucle de animación compartido.
+
+#### Las fotos de archivo se quitaron
+
+Eran de archivo, de una reunión de equipo en un loft, y **no decían nada de la
+tesis**: no había un móvil, ni vídeo vertical, ni nadie mirando nada. Sirvieron
+para juzgar la maqueta y el movimiento y ya no hacen falta, así que se borraron
+del repositorio.
+
+En su lugar, la sección 02 lleva el texto que explica qué es Bihapia, y la banda
+oscura tres objetivos de marca. Texto en vez de fotos prestadas: es lo que había
+que decir desde el principio.
 
 ### 4. Feed de consumo en web — la que menos aporta
 

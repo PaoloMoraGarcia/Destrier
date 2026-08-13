@@ -1,10 +1,8 @@
 'use client';
 
-import Image from 'next/image';
-
 import { Curtain, Marquee, PinnedWords, Reveal, SmoothScroll } from './motion';
 import { Nav } from './Nav';
-import { Band, Cta, Label, Statement } from './pieces';
+import { Band, Cta, Statement } from './pieces';
 
 /**
  * La landing de Bihapia.
@@ -14,32 +12,36 @@ import { Band, Cta, Label, Statement } from './pieces';
  * marquesina, rejilla de tres y cierre— y su movimiento, no su paleta ni su
  * contenido.
  *
- * **Las fotos son provisionales.** Son de archivo, de una reunión de equipo, y
- * sirven para juzgar la maqueta pero no dicen nada de la tesis del producto: no
- * hay un móvil, ni vídeo vertical, ni nadie mirando nada. Están en la sección de
- * creadores, que es donde menos desentonan.
+ * **Solo una sección clava la pantalla**, la 01. Las demás usan la misma
+ * aparición palabra a palabra pero sin detener la página: tres pausas seguidas
+ * en una misma bajada dejan de leerse como efecto y empiezan a leerse como que
+ * la web no responde.
  */
 
-const RASGOS = [
+/** Los tres objetivos de la marca, en la banda oscura. */
+const OBJETIVOS = [
   {
-    src: '/fotos/estudio-01.jpg',
-    alt: 'Un grupo de personas alrededor de una mesa de trabajo',
-    titulo: 'Una cosa cada vez',
-    dato: 'Sin contadores',
+    numero: '01',
+    titulo: 'No scores to beat',
+    cuerpo:
+      'No counters, no leaderboard, no streaks. Nothing that turns what you were curious about into a race against someone else.',
   },
   {
-    src: '/fotos/estudio-02.jpg',
-    alt: 'Dos personas revisando unos planos sobre una mesa',
-    titulo: 'Se acaba cuando quieres',
-    dato: 'Sin rachas',
+    numero: '02',
+    titulo: 'It ends when you want',
+    cuerpo:
+      'One thing, and then you are done. The feed is not designed to keep you there, and leaving costs you nothing.',
   },
   {
-    src: '/fotos/estudio-03.jpg',
-    alt: 'Un equipo reunido en un espacio diáfano de doble altura',
-    titulo: 'Nadie va por delante',
-    dato: 'Sin ranking',
+    numero: '03',
+    titulo: 'Makers get paid',
+    cuerpo:
+      'Creators publish short courses and sell them here. The money goes to whoever made the thing, not to whatever ranked it.',
   },
 ];
+
+/** Los tres huecos de curso. Vacíos a propósito hasta que haya cursos reales. */
+const HUECOS = ['01', '02', '03'];
 
 export function Landing() {
   return (
@@ -121,44 +123,26 @@ export function Landing() {
             className="text-center font-[family-name:var(--font-wordmark)] text-[clamp(3rem,11vw,9rem)] leading-[0.92] tracking-[-0.03em]"
           />
 
+          {/* La cinta, grande. A 11 px pasaba desapercibida; a este tamaño el
+              nombre cruzando es un elemento de la página, no un adorno. */}
           <Marquee
             text="bihapia"
-            className="pb-20 font-mono text-[11px] uppercase tracking-[0.3em] opacity-40 sm:pb-28"
+            className="font-[family-name:var(--font-wordmark)] text-[clamp(2.5rem,7vw,5rem)] leading-none tracking-[-0.02em] opacity-[0.14]"
           />
-        </Band>
 
-        {/* ---------------------------------------------------------------
-            Cómo es
-            La rejilla de tres de la referencia: foto, título, y un dato en
-            monoespaciada donde ellos ponen coordenadas.
-        --------------------------------------------------------------- */}
-        <Band tone="bone" id="como" className="px-6 py-32 sm:py-48">
-          <Label className="mb-16 text-center">02 — Cómo es</Label>
-
-          <Statement className="mx-auto mb-24 max-w-[12ch] text-center">
-            Una cosa cada vez, y ya está
-          </Statement>
-
-          <ul className="mx-auto grid max-w-6xl gap-12 sm:grid-cols-3 sm:gap-6">
-            {RASGOS.map((rasgo, index) => (
-              <Reveal key={rasgo.titulo} as="li" offset={index} rise={36}>
-                <div className="relative aspect-[4/5] w-full overflow-hidden">
-                  <Image
-                    src={rasgo.src}
-                    alt={rasgo.alt}
-                    fill
-                    sizes="(max-width: 640px) 100vw, 33vw"
-                    className="object-cover"
-                  />
-                </div>
-                {/* Dos líneas reservadas aunque el título ocupe una: si no, el
-                    dato de abajo baila de columna a columna y la rejilla deja
-                    de leerse como una rejilla. */}
-                <p className="mt-5 min-h-[2lh] text-lg uppercase leading-tight tracking-tight">
-                  {rasgo.titulo}
+          {/* Los tres objetivos de la marca. Van en la tipografía de la página y
+              en inglés, como el resto de lo grande. */}
+          <ul className="mx-auto grid max-w-6xl gap-12 px-6 pb-24 pt-24 sm:grid-cols-3 sm:gap-10 sm:pb-32 sm:pt-32">
+            {OBJETIVOS.map((objetivo, index) => (
+              <Reveal key={objetivo.titulo} as="li" offset={index} rise={32}>
+                <p className="font-mono text-[11px] uppercase tracking-[0.28em] opacity-40">
+                  {objetivo.numero}
                 </p>
-                <p className="mt-1 font-mono text-xs uppercase tracking-[0.16em] opacity-45">
-                  {rasgo.dato}
+                <p className="mt-5 font-[family-name:var(--font-wordmark)] text-[clamp(1.5rem,2.6vw,2.1rem)] leading-[1.05] tracking-[-0.02em]">
+                  {objetivo.titulo}
+                </p>
+                <p className="mt-4 max-w-[30ch] text-sm leading-relaxed opacity-55">
+                  {objetivo.cuerpo}
                 </p>
               </Reveal>
             ))}
@@ -166,26 +150,70 @@ export function Landing() {
         </Band>
 
         {/* ---------------------------------------------------------------
-            Cursos
-            La tarjeta editorial de su columna, reaprovechada.
+            Cómo es
+            La etiqueta arranca casi al ras de la banda de arriba, y la frase se
+            construye palabra a palabra **sin clavar la pantalla**: la pausa se
+            queda como cosa de la 01.
+
+            Aquí había tres fotos de archivo. Nunca dijeron nada de la tesis
+            —era una reunión de trabajo en un loft— y estaban marcadas como
+            provisionales desde el primer día. En su sitio va el texto que
+            explica qué es esto.
         --------------------------------------------------------------- */}
-        <Band tone="amber" id="cursos" className="px-6 py-32 text-center sm:py-48">
-          <Label className="mb-16">03 — Cursos</Label>
+        <Band tone="bone" id="como" className="px-6 pb-32 pt-10 sm:pb-48 sm:pt-14">
+          <PinnedWords
+            pin={false}
+            label="02 — Cómo es"
+            words={['One', 'thing', 'at', 'a', 'time']}
+            className="text-center font-[family-name:var(--font-wordmark)] text-[clamp(2.4rem,8vw,6rem)] leading-[0.95] tracking-[-0.03em]"
+          />
 
-          <Statement className="mx-auto max-w-[11ch]">Aprende sin prisa</Statement>
+          <Reveal className="mx-auto mt-20 max-w-2xl space-y-6 text-center sm:mt-28" rise={32}>
+            <p className="text-[clamp(1.05rem,1.9vw,1.35rem)] leading-relaxed">
+              Bihapia is a feed built the other way round. No counters, no streaks, no
+              leaderboard — nothing that turns curiosity into a race. You watch one thing,
+              you learn something you didn&apos;t know, and you leave when you want.
+            </p>
+            <p className="text-[clamp(1.05rem,1.9vw,1.35rem)] leading-relaxed opacity-60">
+              Creators publish short courses and sell them here, keeping what they earn.
+              We are building the calm end of the internet.
+            </p>
+          </Reveal>
+        </Band>
 
-          <Reveal className="mx-auto mt-20 max-w-md" rise={32}>
-            <p className="font-mono text-[11px] uppercase tracking-[0.28em] opacity-55">
-              N.001 · Gratis la primera lección
-            </p>
-            <p className="mt-6 font-serif text-[clamp(1.6rem,4vw,2.4rem)] uppercase leading-[1.05]">
-              Lo que no sabes de los mapas
-            </p>
-            <div className="mt-10">
-              <Cta href="/noraverse/lo-que-no-sabes-de-los-mapas" tone="ink">
-                Verlo
-              </Cta>
-            </div>
+        {/* ---------------------------------------------------------------
+            Cursos
+            Tres huecos vacíos y etiquetados. Sin cursos inventados: contenido
+            falso en una página pública es lo que luego nadie se acuerda de
+            quitar. Se llenarán cuando exista la gestión de cursos.
+        --------------------------------------------------------------- */}
+        <Band tone="amber" id="cursos" className="px-6 pb-32 pt-10 sm:pb-48 sm:pt-14">
+          <PinnedWords
+            pin={false}
+            label="03 — Cursos"
+            words={['Take', 'your', 'time']}
+            className="text-center font-[family-name:var(--font-wordmark)] text-[clamp(2.4rem,8vw,6rem)] leading-[0.95] tracking-[-0.03em]"
+          />
+
+          <ul className="mx-auto mt-20 grid max-w-6xl gap-6 sm:mt-28 sm:grid-cols-3">
+            {HUECOS.map((numero, index) => (
+              <Reveal key={numero} as="li" offset={index} rise={32}>
+                <div className="flex aspect-[4/5] w-full flex-col justify-between rounded-lg border border-dashed border-[#0a0a0a]/25 p-6">
+                  <span className="font-mono text-[11px] uppercase tracking-[0.28em] opacity-55">
+                    N.0{numero}
+                  </span>
+                  <span className="font-mono text-[11px] uppercase tracking-[0.28em] opacity-40">
+                    Próximamente
+                  </span>
+                </div>
+              </Reveal>
+            ))}
+          </ul>
+
+          <Reveal className="mt-16 text-center" rise={24}>
+            <Cta href="/entrar" tone="ink">
+              Publicar un curso
+            </Cta>
           </Reveal>
         </Band>
 

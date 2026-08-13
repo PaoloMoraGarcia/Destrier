@@ -39,20 +39,13 @@ export function Band({
   );
 }
 
-/** La etiqueta pequeña que abre cada sección. */
-export function Label({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return (
-    <Reveal
-      className={`font-mono text-[11px] uppercase tracking-[0.28em] opacity-60 ${className}`}
-      rise={16}
-      span={0.2}>
-      {children}
-    </Reveal>
-  );
-}
-
 /**
  * La frase grande.
+ *
+ * En la tipografía de display de la marca, la misma del wordmark y de
+ * `Nothing to chase`. Hubo una serif editorial aquí durante un tiempo y se
+ * quitó: la página funciona con **dos voces**, la de display para lo grande y la
+ * monoespaciada para etiquetas y datos, que es el sistema que la marca ya tenía.
  *
  * Medida estrecha a propósito —doce o trece caracteres por línea— para que el
  * texto se rompa en bloque y se lea como un cartel, no como un párrafo.
@@ -66,7 +59,7 @@ export function Statement({
 }) {
   return (
     <Reveal
-      className={`font-serif text-[clamp(2.5rem,7vw,5.5rem)] uppercase leading-[0.92] tracking-[-0.01em] ${className}`}
+      className={`font-[family-name:var(--font-wordmark)] text-[clamp(2.2rem,6vw,4.5rem)] leading-[0.94] tracking-[-0.03em] ${className}`}
       rise={44}
       span={0.36}>
       {children}

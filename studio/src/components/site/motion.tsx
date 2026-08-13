@@ -99,10 +99,10 @@ interface Subject {
   rise: number;
   offset: number;
   /**
-   * Si está, el nodo es una **pista clavada**: no aparece él, sino que reparte su
-   * progreso entre los hijos que le indique `parts`.
+   * Si está, el nodo no aparece él: reparte su progreso entre los hijos que le
+   * indique `parts`. Con `pin`, además clava la pantalla mientras lo hace.
    */
-  pinned?: { parts: HTMLElement[] };
+  pinned?: { parts: HTMLElement[]; pin: boolean };
 }
 
 const subjects = new Set<Subject>();
@@ -121,17 +121,31 @@ function paintAll() {
     // progreso es cuánto de la pista se ha consumido, y se reparte entre las
     // palabras.
     if (pinned) {
-      const runway = Math.max(1, rect.height - height);
+      let progress: number;
 
-      // El reparto arranca **antes** de que la pantalla se clave: cuando el
-      // borde superior de la pista todavía está a un 40 % de pantalla del tope.
-      //
-      // Sin esta ventaja, al engancharse el clavado quedaba una pantalla entera
-      // de negro con todas las palabras a opacidad 0 — y lo mismo al volver a
-      // subir. Ahora, para cuando la página se detiene, la primera palabra ya
-      // está dentro y nunca hay un fotograma vacío.
-      const lead = height * 0.4;
-      const progress = Math.min(1, Math.max(0, (lead - rect.top) / (runway + lead)));
+      if (pinned.pin) {
+        const runway = Math.max(1, rect.height - height);
+
+        // El reparto arranca **antes** de que la pantalla se clave: cuando el
+        // borde superior de la pista todavía está a un 40 % de pantalla del
+        // tope.
+        //
+        // Sin esta ventaja, al engancharse el clavado quedaba una pantalla
+        // entera de negro con todas las palabras a opacidad 0 — y lo mismo al
+        // volver a subir. Ahora, para cuando la página se detiene, la primera
+        // palabra ya está dentro y nunca hay un fotograma vacío.
+        const lead = height * 0.4;
+        progress = Math.min(1, Math.max(0, (lead - rect.top) / (runway + lead)));
+      } else {
+        // Sin clavado: el reparto se mide contra la travesía del bloque por la
+        // pantalla, de asomar por abajo a quedar arriba del todo. La página no
+        // se detiene — eso queda reservado a una sola sección, porque tres
+        // pausas seguidas en una misma bajada dejan de leerse como efecto y
+        // empiezan a leerse como que la web no responde.
+        const span = Math.max(1, height * 0.75);
+        progress = Math.min(1, Math.max(0, (height * 0.85 - rect.top) / span));
+      }
+
       const parts = pinned.parts;
 
       // Las ventanas se solapan: cada palabra tarda el doble de lo que le
@@ -260,11 +274,19 @@ export function PinnedWords({
   words,
   className = '',
   label,
+  pin = true,
 }: {
   words: string[];
   className?: string;
   /** Etiqueta pequeña de la sección. Va dentro del clavado, no fuera. */
   label?: ReactNode;
+  /**
+   * Con `false` la frase se construye igual pero **sin detener la página**.
+   * Tres pausas seguidas en una misma bajada dejan de leerse como efecto y
+   * empiezan a leerse como que la web no responde, así que solo una sección
+   * clava.
+   */
+  pin?: boolean;
 }) {
   const track = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
@@ -285,15 +307,17 @@ export function PinnedWords({
       return;
     }
 
-    return subscribe({ node, span: 1, rise: 0, offset: 0, pinned: { parts } });
-  }, [reduced]);
+    return subscribe({ node, span: 1, rise: 0, offset: 0, pinned: { parts, pin } });
+  }, [reduced, pin]);
+
+  const clava = pin && !reduced;
 
   return (
     <div
       ref={track}
-      // Sin movimiento reducido la pista mide una pantalla y media: la media
-      // pantalla de sobra es exactamente lo que dura la pausa.
-      className={reduced ? 'relative' : 'relative h-[150svh]'}>
+      // Clavando, la pista mide una pantalla y media: la media pantalla de sobra
+      // es exactamente lo que dura la pausa. Sin clavar no hace falta pista.
+      className={clava ? 'relative h-[150svh]' : 'relative'}>
       {/*
         Arriba y no centrada.
         Centrada dejaba media pantalla de negro entre el vídeo y la frase. Pegada
@@ -302,11 +326,11 @@ export function PinnedWords({
       */}
       <div
         className={`flex flex-col items-center px-6 ${
-          reduced ? '' : 'sticky top-0 h-svh justify-start pt-[10svh]'
+          clava ? 'sticky top-0 h-svh justify-start pt-[10svh]' : ''
         }`}>
         {/*
-          La etiqueta va **dentro** del clavado y **sin animación**: se ve
-          durante toda la pausa. Fuera se iría justo cuando más falta hace.
+          La etiqueta va **dentro** y **sin animación**: se ve durante toda la
+          pausa. Fuera se iría justo cuando más falta hace.
         */}
         {label && (
           <p className="mb-8 font-mono text-[11px] uppercase tracking-[0.28em] opacity-45">
