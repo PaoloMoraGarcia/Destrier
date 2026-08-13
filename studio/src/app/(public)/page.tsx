@@ -3,12 +3,12 @@ import type { Metadata } from 'next';
 import { Landing } from '@/components/site/Landing';
 
 export const metadata: Metadata = {
-  title: 'Bihapia · Disfruta de lo que no sabes',
+  title: 'Destrier · Be happy about the things you don’t know',
   description:
-    'Un feed sin contadores, sin rachas y sin ranking. Una cosa cada vez, y se acaba cuando quieres.',
+    'For people with something worth teaching. We help turn what you know into a learning path someone can actually follow.',
   openGraph: {
-    title: 'Bihapia',
-    description: 'Disfruta de lo que no sabes.',
+    title: 'Destrier',
+    description: 'Be happy about the things you don’t know.',
     type: 'website',
   },
 };

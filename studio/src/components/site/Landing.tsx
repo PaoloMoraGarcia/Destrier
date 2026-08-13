@@ -1,47 +1,44 @@
 'use client';
 
-import { Curtain, Marquee, PinnedWords, Reveal, SmoothScroll } from './motion';
+import { Contact } from './Contact';
+import { Curtain, Marquee, PinnedScene, Reveal, SmoothScroll } from './motion';
 import { Nav } from './Nav';
-import { Band, Cta, Statement } from './pieces';
+import { Band, Cta } from './pieces';
 
 /**
- * La landing de Bihapia.
+ * La landing de Destrier.
  *
- * Adaptada de houseofhoney.com: se toma su recorrido —portada con el nombre a
- * sangre, bloques de color alternando, etiqueta pequeña y frase enorme,
- * marquesina, rejilla de tres y cierre— y su movimiento, no su paleta ni su
- * contenido.
+ * No es una plataforma: es una marca y un punto de contacto para quien tiene
+ * algo que enseñar y quiere darle forma. Todo el recorrido lleva a una sola
+ * acción — contar qué quieres enseñar—, y el contacto es la consecuencia de
+ * haber entendido la propuesta, no una venta.
  *
- * **Solo una sección clava la pantalla**, la 01. Las demás usan la misma
- * aparición palabra a palabra pero sin detener la página: tres pausas seguidas
- * en una misma bajada dejan de leerse como efecto y empiezan a leerse como que
- * la web no responde.
+ * Por eso no hay precios, ni paquetes, ni lista de servicios, ni prueba social,
+ * ni un CTA repetido en cada sección. Solo uno, al final.
+ *
+ * La estética viene de houseofhoney.com: portada tipográfica a sangre, bloques
+ * de color alternando, escenas que se construyen con el scroll. Dos voces —la de
+ * display para lo grande, la monoespaciada para etiquetas— y nada más.
  */
 
-/** Los tres objetivos de la marca, en la banda oscura. */
-const OBJETIVOS = [
+/** Los tres principios. Principios, no funcionalidades. */
+const PRINCIPLES = [
   {
     numero: '01',
-    titulo: 'No scores to beat',
-    cuerpo:
-      'No counters, no leaderboard, no streaks. Nothing that turns what you were curious about into a race against someone else.',
+    titulo: 'Start with the outcome',
+    cuerpo: 'What should someone be able to do when they finish?',
   },
   {
     numero: '02',
-    titulo: 'It ends when you want',
-    cuerpo:
-      'One thing, and then you are done. The feed is not designed to keep you there, and leaving costs you nothing.',
+    titulo: 'One thing at a time',
+    cuerpo: 'The best learning path is not the longest one.',
   },
   {
     numero: '03',
-    titulo: 'Makers get paid',
-    cuerpo:
-      'Creators publish short courses and sell them here. The money goes to whoever made the thing, not to whatever ranked it.',
+    titulo: 'Knowledge has a shape',
+    cuerpo: 'What you know becomes more useful when someone else can follow it.',
   },
 ];
-
-/** Los tres huecos de curso. Vacíos a propósito hasta que haya cursos reales. */
-const HUECOS = ['01', '02', '03'];
 
 export function Landing() {
   return (
@@ -51,19 +48,17 @@ export function Landing() {
       <SmoothScroll>
         {/* ---------------------------------------------------------------
             Portada
-            Marco negro arriba, el nombre a todo el ancho y el vídeo debajo.
-            Nada más: sin eslogan ni entradilla, que es lo más minimalista que
-            puede ser sin dejar de decir cómo se llama.
+            Franja arriba con la nav, el nombre a todo el ancho y el vídeo
+            debajo. Nada más.
 
-            El marco cierra al ras del asta de la "h" y del punto de la "i", y
-            el vídeo abre al ras del rabo de la "p". El nombre queda encajado
+            La franja cierra al ras del asta de la "d" y del punto de la "i", y
+            el vídeo abre al ras de la línea base. El nombre queda encajado
             entre los dos.
         --------------------------------------------------------------- */}
-        <Band tone="bone" className="@container">
+        <Band tone="bone" id="top" className="@container">
           {/* La franja es del color del lienzo, así que no se ve como banda: lo
               que hace es reservar el alto y dejar la nav centrada en él, con el
-              mismo aire arriba y abajo. El filo sigue cayendo al ras del asta,
-              aunque ahora no haya cambio de color que lo señale. */}
+              mismo aire arriba y abajo. */}
           <div className="flex h-[5.5rem] items-center">
             <Nav />
           </div>
@@ -72,13 +67,13 @@ export function Landing() {
             El wordmark sube `--ink-top`.
 
             La caja de la línea no es donde está la tinta: con `line-height`
-            menor que 1, la "b" empieza 0.0622em por debajo del borde de la
-            caja. Sin esta subida quedaría una franja clara entre el negro y el
-            arranque del asta — invisible en el CSS y muy visible en pantalla.
+            menor que 1, la "d" empieza por debajo del borde de la caja. Sin esta
+            subida quedaría una franja clara entre la franja y el arranque del
+            asta — invisible en el CSS y muy visible en pantalla.
 
             Sin margen lateral: la palabra toca los dos bordes.
           */}
-          <h1 className="wordmark-hero mt-[calc(-1*var(--ink-top))]">bi&amp;hapia</h1>
+          <h1 className="wordmark-hero mt-[calc(-1*var(--ink-top))]">destrier</h1>
 
           {/*
             El vídeo va en 4K y pesa lo que pesa, así que el `poster` no es un
@@ -104,162 +99,122 @@ export function Landing() {
         </Band>
 
         {/* ---------------------------------------------------------------
-            La idea
+            01 — The idea
+            La filosofía, y de ahí a por qué el conocimiento necesita una forma.
         --------------------------------------------------------------- */}
-        {/* Sin relleno arriba: la frase arranca justo detrás del vídeo. Todo lo
-            que se pusiera aquí sería negro vacío antes de que apareciera nada. */}
         <Band tone="ink" id="idea" className="@container">
-          {/*
-            Maciza y no en hueco: la regla del contorno es del wordmark
-            `bi&hapia`, no de todo el texto de la marca.
-
-            Centrada y con la pantalla clavada: cada palabra entra cuando el
-            scroll llega a su punto. La etiqueta y la entradilla van dentro y
-            sin animación, para que el tramo previo no sea negro vacío.
-          */}
-          <PinnedWords
-            label="01 — La idea"
+          <PinnedScene
+            label="01 — The idea"
             words={['Nothing', 'to', 'chase']}
-            className="text-center font-[family-name:var(--font-wordmark)] text-[clamp(3rem,11vw,9rem)] leading-[0.92] tracking-[-0.03em]"
-          />
-
-          {/* La cinta, grande. A 11 px pasaba desapercibida; a este tamaño el
-              nombre cruzando es un elemento de la página, no un adorno. */}
-          <Marquee
-            text="bihapia"
-            className="font-[family-name:var(--font-wordmark)] text-[clamp(2.5rem,7vw,5rem)] leading-none tracking-[-0.02em] opacity-[0.14]"
-          />
-
-          {/* Los tres objetivos de la marca. Van en la tipografía de la página y
-              en inglés, como el resto de lo grande. */}
-          <ul className="mx-auto grid max-w-6xl gap-12 px-6 pb-24 pt-24 sm:grid-cols-3 sm:gap-10 sm:pb-32 sm:pt-32">
-            {OBJETIVOS.map((objetivo, index) => (
-              <Reveal key={objetivo.titulo} as="li" offset={index} rise={32}>
+            className="text-center font-[family-name:var(--font-wordmark)] text-[clamp(2.6rem,9vw,7rem)] leading-[0.94] tracking-[-0.03em]"
+            lead="Learning does not need more noise. It needs a reason, a shape and somewhere to go."
+            itemsClassName="mx-auto grid max-w-5xl gap-10 sm:grid-cols-3"
+            items={PRINCIPLES.map((p) => (
+              <div key={p.titulo}>
                 <p className="font-mono text-[11px] uppercase tracking-[0.28em] opacity-40">
-                  {objetivo.numero}
+                  {p.numero}
                 </p>
-                <p className="mt-5 font-[family-name:var(--font-wordmark)] text-[clamp(1.5rem,2.6vw,2.1rem)] leading-[1.05] tracking-[-0.02em]">
-                  {objetivo.titulo}
+                <p className="mt-4 font-[family-name:var(--font-wordmark)] text-[clamp(1.2rem,2vw,1.6rem)] leading-[1.1] tracking-[-0.02em]">
+                  {p.titulo}
                 </p>
-                <p className="mt-4 max-w-[30ch] text-sm leading-relaxed opacity-55">
-                  {objetivo.cuerpo}
-                </p>
-              </Reveal>
+                <p className="mt-3 max-w-[32ch] text-sm leading-relaxed opacity-55">{p.cuerpo}</p>
+              </div>
             ))}
-          </ul>
+          />
+
+          {/* La cinta cierra la banda. Debajo de los principios quedaba un tramo
+              oscuro sin nada. */}
+          <Marquee
+            text="destrier"
+            className="pb-20 font-[family-name:var(--font-wordmark)] text-[clamp(2.5rem,7vw,5rem)] leading-none tracking-[-0.02em] opacity-[0.14] sm:pb-28"
+          />
         </Band>
 
         {/* ---------------------------------------------------------------
-            Cómo es
-            La etiqueta arranca casi al ras de la banda de arriba, y la frase se
-            construye palabra a palabra **sin clavar la pantalla**: la pausa se
-            queda como cosa de la 01.
-
-            Aquí había tres fotos de archivo. Nunca dijeron nada de la tesis
-            —era una reunión de trabajo en un loft— y estaban marcadas como
-            provisionales desde el primer día. En su sitio va el texto que
-            explica qué es esto.
+            02 — A learning path
+            Qué significa dar forma a lo que alguien sabe. Sin lista de
+            servicios y sin "we build": es una forma de pensar, no una oferta.
         --------------------------------------------------------------- */}
-        <Band tone="bone" id="como" className="px-6 pb-32 pt-10 sm:pb-48 sm:pt-14">
-          <PinnedWords
-            pin={false}
-            label="02 — Cómo es"
-            words={['One', 'thing', 'at', 'a', 'time']}
-            className="text-center font-[family-name:var(--font-wordmark)] text-[clamp(2.4rem,8vw,6rem)] leading-[0.95] tracking-[-0.03em]"
+        <Band tone="bone" id="path" className="@container">
+          <PinnedScene
+            label="02 — A learning path"
+            words={['From', 'what', 'you', 'know', 'to', 'what', 'someone', 'can', 'do']}
+            // Nueve palabras piden un cuerpo menor que en las otras dos, o el
+            // titular se come la pantalla entera.
+            className="text-center font-[family-name:var(--font-wordmark)] text-[clamp(1.8rem,5vw,3.6rem)] leading-[1.02] tracking-[-0.03em]"
+            itemsClassName="mx-auto max-w-2xl"
+            items={[
+              <p
+                key="path"
+                className="text-center text-[clamp(1.05rem,1.9vw,1.35rem)] leading-relaxed">
+                A course is not a folder full of videos. It is a path: a clear outcome, the
+                right steps and enough room to make the knowledge your own.
+              </p>,
+            ]}
           />
-
-          <Reveal className="mx-auto mt-20 max-w-2xl space-y-6 text-center sm:mt-28" rise={32}>
-            <p className="text-[clamp(1.05rem,1.9vw,1.35rem)] leading-relaxed">
-              Bihapia is a feed built the other way round. No counters, no streaks, no
-              leaderboard — nothing that turns curiosity into a race. You watch one thing,
-              you learn something you didn&apos;t know, and you leave when you want.
-            </p>
-            <p className="text-[clamp(1.05rem,1.9vw,1.35rem)] leading-relaxed opacity-60">
-              Creators publish short courses and sell them here, keeping what they earn.
-              We are building the calm end of the internet.
-            </p>
-          </Reveal>
         </Band>
 
         {/* ---------------------------------------------------------------
-            Cursos
-            Tres huecos vacíos y etiquetados. Sin cursos inventados: contenido
-            falso en una página pública es lo que luego nadie se acuerda de
-            quitar. Se llenarán cuando exista la gestión de cursos.
+            03 — Start with an idea
+            La invitación. Un único CTA en toda la página, y baja al formulario.
         --------------------------------------------------------------- */}
-        <Band tone="amber" id="cursos" className="px-6 pb-32 pt-10 sm:pb-48 sm:pt-14">
-          <PinnedWords
-            pin={false}
-            label="03 — Cursos"
-            words={['Take', 'your', 'time']}
-            className="text-center font-[family-name:var(--font-wordmark)] text-[clamp(2.4rem,8vw,6rem)] leading-[0.95] tracking-[-0.03em]"
-          />
-
-          <ul className="mx-auto mt-20 grid max-w-6xl gap-6 sm:mt-28 sm:grid-cols-3">
-            {HUECOS.map((numero, index) => (
-              <Reveal key={numero} as="li" offset={index} rise={32}>
-                <div className="flex aspect-[4/5] w-full flex-col justify-between rounded-lg border border-dashed border-[#0a0a0a]/25 p-6">
-                  <span className="font-mono text-[11px] uppercase tracking-[0.28em] opacity-55">
-                    N.0{numero}
-                  </span>
-                  <span className="font-mono text-[11px] uppercase tracking-[0.28em] opacity-40">
-                    Próximamente
-                  </span>
+        <Band tone="amber" id="start" className="@container">
+          <PinnedScene
+            label="03 — Start with an idea"
+            words={['Have', 'something', 'worth', 'teaching?']}
+            className="text-center font-[family-name:var(--font-wordmark)] text-[clamp(2.2rem,7vw,5.5rem)] leading-[0.98] tracking-[-0.03em]"
+            itemsClassName="mx-auto max-w-xl"
+            items={[
+              <div key="invite" className="text-center">
+                <p className="text-[clamp(1.05rem,1.9vw,1.35rem)] leading-relaxed">
+                  You do not need to know where to start. Tell us what is in your head. We
+                  can begin there.
+                </p>
+                <div className="mt-12 flex justify-center">
+                  <Cta href="#contact" tone="ink">
+                    Tell us your idea
+                  </Cta>
                 </div>
-              </Reveal>
-            ))}
-          </ul>
-
-          <Reveal className="mt-16 text-center" rise={24}>
-            <Cta href="/entrar" tone="ink">
-              Publicar un curso
-            </Cta>
-          </Reveal>
+              </div>,
+            ]}
+          />
         </Band>
 
         {/* ---------------------------------------------------------------
-            Cierre
-            Panel claro con las esquinas de abajo redondeadas, montado sobre el
-            pie oscuro. Es el remate de la referencia.
+            Contacto
+            Panel claro de esquinas redondeadas sobre el pie oscuro, que es el
+            remate de la referencia.
         --------------------------------------------------------------- */}
         <Band tone="ink">
-          <div className="rounded-b-[2.5rem] bg-[#f0f0ec] px-6 py-32 text-center text-[#0a0a0a] sm:rounded-b-[4rem] sm:py-48">
-            <Statement className="mx-auto max-w-[14ch]">
-              Sería un placer que no supieras por dónde empezar
-            </Statement>
-
-            <Reveal className="mt-14" rise={24}>
-              <Cta href="/entrar" tone="ink">
-                Descargar
-              </Cta>
-            </Reveal>
+          <div
+            id="contact"
+            className="rounded-b-[2.5rem] bg-[#f0f0ec] px-6 py-28 text-[#0a0a0a] sm:rounded-b-[4rem] sm:py-40">
+            <Contact />
           </div>
 
           <footer className="px-6 pb-12 pt-24 sm:px-10">
             <div className="mx-auto flex max-w-6xl flex-col gap-10 border-b border-[#f4f4ef]/12 pb-10 sm:flex-row sm:justify-between">
               {/* El contorno se pide en línea: `.wordmark` lo fija en tinta, y
                   sobre el pie oscuro eso es negro sobre negro. */}
-              <span
-                className="wordmark text-2xl"
-                style={{ WebkitTextStroke: '1.2px #f4f4ef' }}>
-                bi&amp;hapia
+              <span className="wordmark text-2xl" style={{ WebkitTextStroke: '1.2px #f4f4ef' }}>
+                destrier
               </span>
 
               <div className="flex flex-wrap gap-x-12 gap-y-6 font-mono text-xs uppercase tracking-[0.16em]">
                 <a href="#idea" className="opacity-55 hover:opacity-100">
-                  La idea
+                  The idea
                 </a>
-                <a href="#como" className="opacity-55 hover:opacity-100">
-                  Cómo es
+                <a href="#path" className="opacity-55 hover:opacity-100">
+                  A learning path
                 </a>
-                <a href="/entrar" className="opacity-55 hover:opacity-100">
-                  Publicar
+                <a href="#contact" className="opacity-55 hover:opacity-100">
+                  Contact
                 </a>
               </div>
             </div>
 
             <p className="mx-auto mt-8 max-w-6xl font-mono text-[11px] uppercase tracking-[0.16em] opacity-35">
-              Bihapia · Disfruta de lo que no sabes
+              Destrier · Be happy about the things you don&apos;t know
             </p>
           </footer>
         </Band>

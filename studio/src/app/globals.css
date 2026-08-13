@@ -68,7 +68,7 @@ body {
  */
 .wordmark-hero {
   font-family: var(--font-wordmark);
-  font-size: 19.9cqw;
+  font-size: 21.4cqw;
   line-height: 0.86;
   /* En una sola línea siempre. Si parte, deja de ser un cartel y además la
      medida del ajuste deja de cuadrar. */
@@ -90,8 +90,17 @@ body {
    * se ve es la tinta. Estos dos márgenes cancelan esa diferencia, y van en
    * `em` para que la cancelación valga a cualquier tamaño de pantalla.
    */
-  --ink-top: 0.0622em;
-  --ink-bottom: 0.0892em;
+  /*
+   * Medidos para `destrier`, no heredados de `bi&hapia`.
+   *
+   * El de abajo es **negativo** y ese es el punto: `destrier` no tiene ningún
+   * descendente, así que la tinta acaba en la línea base, 0.0638em **por
+   * encima** del borde inferior de la caja. Con el valor de la palabra anterior
+   * —que sí tenía la "p"— quedaba un hueco claro de casi medio centímetro entre
+   * las letras y el vídeo.
+   */
+  --ink-top: 0.0642em;
+  --ink-bottom: -0.0638em;
 
   /* El rabo de la "p" queda tocando lo que venga debajo. */
   margin-bottom: var(--ink-bottom);

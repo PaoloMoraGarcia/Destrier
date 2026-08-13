@@ -1,7 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-
 /**
  * La navegación, en la franja de arriba de la portada.
  *
@@ -21,9 +19,9 @@ import Link from 'next/link';
  */
 
 const LINKS = [
-  { href: '#idea', label: 'La idea' },
-  { href: '#como', label: 'Cómo es' },
-  { href: '#cursos', label: 'Cursos' },
+  { href: '#idea', label: 'The idea' },
+  { href: '#path', label: 'A learning path' },
+  { href: '#start', label: 'Start with an idea' },
 ];
 
 export function Nav() {
@@ -32,12 +30,12 @@ export function Nav() {
     // contenido — las columnas dejarían de repartir el ancho de la pantalla y
     // el grupo del centro saldría desplazado a la izquierda.
     <nav className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2 px-2 sm:px-3">
-      <Link
-        href="/"
-        aria-label="Bihapia, inicio"
+      <a
+        href="#top"
+        aria-label="Destrier, home"
         className="bubble grid size-10 shrink-0 place-items-center justify-self-start rounded-full">
         <span className="block size-3 rounded-[2px] bg-[#0a0a0a]" />
-      </Link>
+      </a>
 
       <div className="flex items-center gap-2">
         {LINKS.map((link) => (
@@ -50,16 +48,16 @@ export function Nav() {
         ))}
       </div>
 
-      <Link
-        href="/entrar"
+      <a
+        href="#contact"
         className="bubble flex items-center gap-3 justify-self-end rounded-full py-1.5 pl-5 pr-1.5 text-sm text-[#0a0a0a]">
-        <span>Publicar</span>
+        <span>Contact</span>
         <span className="grid size-7 place-items-center rounded-full bg-[#0a0a0a]" aria-hidden>
           <svg width="11" height="9" viewBox="0 0 13 11" fill="none">
             <path d="M7.5 1L12 5.5L7.5 10M12 5.5H0" stroke="#f0f0ec" strokeWidth="1.5" />
           </svg>
         </span>
-      </Link>
+      </a>
     </nav>
   );
 }

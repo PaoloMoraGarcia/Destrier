@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { EASE, Reveal } from './motion';
@@ -87,7 +86,7 @@ export function Cta({
   const t = tones[tone];
 
   return (
-    <Link
+    <a
       href={href}
       className={`group inline-flex items-center gap-4 rounded-full py-2 pl-7 pr-2 text-sm font-medium ${t.pill}`}
       style={{ transition: `opacity 400ms ${EASE}` }}>
@@ -102,6 +101,6 @@ export function Cta({
           />
         </svg>
       </span>
-    </Link>
+    </a>
   );
 }

@@ -74,13 +74,35 @@ tampoco lleva su prueba social: nada de "3.800 miembros" ni valoraciones. La
 prueba es que **una lección se ve entera y gratis antes de pagar**, que el
 paywall de `0002_rls.sql` ya servía sin tocar una sola policy.
 
-### 3. La landing pública — **hecha, en `(public)/page.tsx`**
+### 3. La landing pública — **Destrier**, en `(public)/page.tsx`
 
-La cara del producto, en la raíz del dominio. Por eso el panel se mudó a
-`/panel`: bihapia.com tiene que enseñar el producto, no un cuadro de mandos.
+**La landing ya no vende una plataforma de vídeo.** Montar y mantener una tiene
+un coste que no se va a asumir ahora, así que la web pasa a ser **una marca y un
+punto de contacto** para quien tiene algo que enseñar y quiere darle forma. La
+tesis sigue siendo la misma: *Be happy about the things you don't know*.
 
-Le habla a quien mira, no a quien publica, y lleva por delante la tesis
-anti-FOMO. El recorrido y el movimiento están adaptados de **houseofhoney.com**.
+Todo el recorrido —filosofía, por qué el conocimiento necesita una forma, la
+pregunta que organiza un curso, la invitación— lleva a **una sola acción**:
+contar qué quieres enseñar. Por eso no hay precios, ni paquetes, ni lista de
+servicios, ni prueba social, ni un CTA repetido en cada sección. Uno, al final.
+
+El recorrido y el movimiento siguen adaptados de **houseofhoney.com**.
+
+#### Dos nombres a la vez, y es a propósito
+
+La web pública es **Destrier**; el panel del creador y la app móvil siguen
+diciendo `bi&hapia`, porque el encargo pedía no tocarlos. Es una inconsistencia
+conocida y temporal, no un descuido: unificarla es una decisión de producto, no
+algo que deba colar dentro de un cambio de landing.
+
+#### El wordmark cambió de palabra, y los números con él
+
+`destrier` tiene los mismos ocho caracteres que `bi&hapia`, pero **no tiene
+ningún descendente**. El tamaño (`21.4cqw`) y las correcciones de tinta se
+volvieron a medir: `--ink-bottom` pasó a ser **negativo**, porque la tinta acaba
+en la línea base, por encima del borde de la caja. Con el valor de la palabra
+anterior —que sí tenía la "p"— quedaba un hueco claro entre las letras y el
+vídeo. Heredar esos números habría sido el fallo fácil.
 
 #### Qué se tomó de la referencia
 
@@ -171,12 +193,29 @@ Retina —la hierba y los guijarros pierden definición—, así que se descart�
 Lleva `poster`, y no es un adorno: con 37 MB, sin él la portada arranca con un
 rectángulo negro. Y va silenciado por obligación, no por gusto.
 
-#### Solo una sección clava la pantalla
+#### Las escenas clavadas, en dos fases
 
-La 01. Las demás usan la misma aparición palabra a palabra pero **sin detener la
-página**: tres pausas seguidas en una misma bajada dejan de leerse como efecto y
-empiezan a leerse como que la web no responde. Lo gobierna la opción `pin` de
-`PinnedWords`, sobre el mismo bucle de animación compartido.
+Cada sección se clava y se construye en dos tramos: primero el título palabra a
+palabra, después los bloques que lo acompañan. Al terminar, la pista se agota y
+la página sigue. Todo sobre el mismo bucle de animación compartido.
+
+**Y no clava si la escena no cabe en la pantalla.** Una escena clavada más alta
+que la ventana es una página rota: se congela el scroll y parte del contenido
+queda fuera sin forma de llegar a él. Se mide al montar y al redimensionar; a
+375×600, por ejemplo, la sección 01 deja de clavar sola.
+
+Cuidado con **qué** se mide: la primera versión medía el escenario, cuyo alto es
+una pantalla entera justo cuando está clavado. Eso daba siempre "no cabe", lo
+desclavaba, y al desclavarse volvía a caber — un bucle que acababa con ninguna
+sección clavando. Se mide el contenido, que tiene alto natural.
+
+#### El formulario no tiene backend, y no lo finge
+
+La acción es un **enlace `mailto` de verdad** con las respuestas ya redactadas.
+Funciona hoy, sin servidor ni dependencias, y nadie se queda creyendo que ha
+enviado algo que no llegó. Al ser un enlace se puede copiar y abrir aparte, cosa
+que un botón que asigna `location` no permite — y además hace el resultado
+comprobable. El día que haya dónde recibirlo, cambia a dónde apunta y ya está.
 
 #### Las fotos de archivo se quitaron
 
