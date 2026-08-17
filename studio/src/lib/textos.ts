@@ -85,10 +85,39 @@ export interface Textos {
     texto: string;
     /** El enlace para agendar llamada, que sustituyó al botón. */
     agendar: string;
-    /** La frase que presenta los aparatos, ya dentro del negro. */
+    /**
+     * La frase que presenta los aparatos, **en dos piezas**.
+     *
+     * `aparatosFrase` es la línea pequeña y `aparatosEnfasis` la grande, que es la
+     * que lleva el subrayado fino y entra desenfocándose. Partida y no una sola
+     * cadena porque el énfasis va en la segunda mitad: en una sola línea, «con tu
+     * idea» se leía con el mismo peso que el resto.
+     */
     aparatosFrase: string;
+    aparatosEnfasis: string;
     /** Y lo que los describe para quien no los ve. */
     aparatos: string;
+  };
+
+  /**
+   * El bloque de la llamada, en `#idea`.
+   *
+   * **No repite lo que vende**, que es lo que hacía el componente del que viene.
+   * Contesta la duda de quien está a punto de agendar y no lo hace: qué se cuenta
+   * en esa media hora, y qué pasa si resulta que no encaja. Sin precio publicado ni
+   * trabajos que enseñar, esto es lo único que baja esa ansiedad.
+   */
+  llamada: {
+    eyebrow: string;
+    titular: string;
+    cuerpo: string;
+    /** La acción principal, a Calendly. */
+    agendar: string;
+    /** La de contorno, que baja al formulario. */
+    escribir: string;
+    /** El rótulo de la fila de tecnologías, y la fila. */
+    construidaCon: string;
+    tecnologias: string[];
   };
 
   about: {
@@ -159,8 +188,20 @@ const en: Textos = {
     texto:
       'Destrier builds the system your business runs on — and keeps it in working order.',
     agendar: 'Book a call',
-    aparatosFrase: 'What we can do with your idea',
+    aparatosFrase: 'What we can do',
+    aparatosEnfasis: 'with your idea',
     aparatos: 'The same site running on a laptop and on a phone.',
+  },
+
+  llamada: {
+    eyebrow: 'The call',
+    titular: 'Thirty minutes, and no commitment',
+    cuerpo:
+      'You describe what you need. Destrier tells you what it would take, how long it would run and what it would cost — and if it is not a fit, you get told that instead. No preparation needed.',
+    agendar: 'Book 30 minutes',
+    escribir: 'Or write instead',
+    construidaCon: 'This page is built with',
+    tecnologias: ['Next.js', 'React', 'TypeScript', 'Tailwind CSS', 'Supabase'],
   },
 
   about: {
@@ -272,8 +313,20 @@ const es: Textos = {
     texto:
       'Destrier construye el sistema con el que funciona tu negocio, y se ocupa de mantenerlo.',
     agendar: 'Agendar una llamada',
-    aparatosFrase: 'Lo que podemos hacer con tu idea',
+    aparatosFrase: 'Lo que podemos hacer',
+    aparatosEnfasis: 'con tu idea',
     aparatos: 'El mismo sitio funcionando en un portátil y en un móvil.',
+  },
+
+  llamada: {
+    eyebrow: 'La llamada',
+    titular: 'Media hora, y sin compromiso',
+    cuerpo:
+      'Cuentas qué necesitas. Destrier te dice qué haría falta, cuánto llevaría y qué costaría — y si resulta que no encaja, te lo dice también. No hay que preparar nada.',
+    agendar: 'Agendar 30 minutos',
+    escribir: 'O escríbeme',
+    construidaCon: 'Esta página está construida con',
+    tecnologias: ['Next.js', 'React', 'TypeScript', 'Tailwind CSS', 'Supabase'],
   },
 
   about: {

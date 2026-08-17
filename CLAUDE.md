@@ -126,7 +126,14 @@ La estrategia web está en [docs/web.md](docs/web.md).
   Quien lo hace es **Destrier**, nombrado, no una primera persona.
 - **La página abre en español**, y el inglés está a un clic en el pie. `elegirIdioma`
   no mira `Accept-Language`: el punto de partida es fijo.
-- **De lo que llega de fuera se coge el mecanismo, no el andamiaje.** El botón de
+- **De lo que llega de fuera se coge el mecanismo, no el andamiaje.** El bloque de
+  la llamada de `#idea`, la fila de «construida con» y el desenfoque de *«con tu
+  idea»* vienen de tres componentes de shadcn y entraron con **cero dependencias
+  nuevas**: los iconos son SVG de doce líneas, dos variantes de botón son un
+  ternario, y para un enlace no hace falta `asChild`. Y al traerlos se cambió lo que
+  no encaja: el `Badge` no es una píldora —eso es el ámbar otra vez— y `bg-muted` es
+  un borde de 1 px, porque un panel gris sobre la sección tinta es un rectángulo
+  gris. El botón de
   la flecha viene de un componente de shadcn y entró **sin una sola dependencia**:
   ni `components/ui`, ni `cn()`, ni `class-variance-authority`, ni
   `@radix-ui/react-slot`, ni `lucide-react` para un icono. Este proyecto no es
