@@ -509,20 +509,12 @@ export function WordScroll({
         </div>
       )}
 
-      {/*
-        La ranura va centrada: lo que entra por aquí es el botón de la página, y un
-        `max-w` sin alineación lo dejaba pegado a la izquierda.
-
-        **Y ya no lleva `max-w-4xl`.** Ese tope de 896 px se puso cuando por aquí
-        solo entraba un botón, y desde que entran los aparatos era él quien decidía
-        su tamaño: subir el ancho en `Dispositivos.tsx` no hacía absolutamente nada
-        porque el padre ya había cortado. Cada cosa que entra por la ranura pone su
-        propia medida, que es donde se puede razonar sobre ella.
-      */}
+      {/* La ranura va centrada: lo que entra por aquí es el botón de la página,
+          y un `max-w` sin alineación lo dejaba pegado a la izquierda. */}
       {children && (
         // Con margen propio: la cola iba pegada a la frase y el botón acababa
         // tocando la última línea del texto de encima.
-        <div className={`mx-auto flex w-full justify-center ${AIRE.accion}`}>{children}</div>
+        <div className={`mx-auto flex max-w-4xl justify-center ${AIRE.accion}`}>{children}</div>
       )}
     </div>
   );

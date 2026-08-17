@@ -4,14 +4,12 @@ import { useState } from 'react';
 
 import type { Idioma, Textos } from '@/lib/textos';
 
-import { BloqueLlamada } from './BloqueLlamada';
 import { BotonFlecha } from './BotonFlecha';
 import { Contact } from './Contact';
 import { Cta } from './Cta';
 import { Dispositivos } from './Dispositivos';
 import { Header } from './Header';
 import { Hero } from './Hero';
-import { Revelado } from './Revelado';
 import { SelectorIdioma } from './SelectorIdioma';
 import { Curtain, SmoothScroll } from './motion';
 import { WordScroll } from './WordScroll';
@@ -94,16 +92,6 @@ import { WordScroll } from './WordScroll';
  */
 const AGENDA = 'https://calendly.com/hello-destrier/30min';
 
-/**
- * El aire entre el bloque de la llamada y la frase de los aparatos.
- *
- * Es el mismo salto que `AIRE.lejos` en `WordScroll.tsx` —128 px—, y va aquí en vez
- * de importarse porque esa escala describe el ritmo *dentro* de una frase revelada
- * y esto es la costura entre dos bloques distintos de la misma sección. Si algún
- * día las dos escalas se separan, esta no debe seguir a la otra por accidente.
- */
-const AIRE_APARATOS = 'mt-[128px]';
-
 export function Landing({
   idioma,
   textos,
@@ -163,42 +151,16 @@ export function Landing({
             text={textos.idea.texto}
             tone="ink"
             revelado="brillo">
-            {/* El bloque de la llamada, y debajo los aparatos con su frase.
-                Aquí hubo un enlace suelto de «Agendar una llamada», y antes de eso
-                un botón manuscrito que se fue con su tipografía. */}
+            {/* Agendar, y debajo los aparatos con su frase.
+                El botón manuscrito que había aquí se fue con su tipografía. */}
             <div className="text-center">
-              <BloqueLlamada textos={textos.llamada} agenda={AGENDA} />
+              <BotonFlecha href={AGENDA} externo>
+                {textos.idea.agendar}
+              </BotonFlecha>
 
-              {/*
-                La frase de los aparatos, en dos líneas y con el peso en la de
-                abajo. En una sola, «con tu idea» se leía con el mismo peso que el
-                resto y no era eso lo que había que destacar.
-              */}
-              <div className={AIRE_APARATOS}>
-                <p className="mx-auto max-w-[24ch] text-[clamp(1.6rem,2.8vw,2.4rem)] font-medium leading-[1.15] tracking-[-0.02em] opacity-70">
-                  {textos.idea.aparatosFrase}
-                </p>
-
-                <Revelado
-                  como="p"
-                  className="mx-auto mt-3 max-w-[20ch] text-[clamp(2.8rem,5.4vw,4.4rem)] font-medium leading-[1.08] tracking-[-0.03em]"
-                  /*
-                   * El subrayado, en `style` y a **1 px**.
-                   *
-                   * Estaba en `decoration-[0.05em]`, que a este cuerpo son más de
-                   * 2 px y a 4,4 rem pasan de 3: una raya gruesa debajo de una
-                   * letra fina. Un grosor fijo se queda fino a cualquier tamaño, y
-                   * la separación mayor lo despega de los rabos de las letras.
-                   */
-                  estiloPalabra={{
-                    textDecorationLine: 'underline',
-                    textDecorationThickness: '1px',
-                    textDecorationColor: 'rgba(244,244,239,0.35)',
-                    textUnderlineOffset: '0.24em',
-                  }}>
-                  {textos.idea.aparatosEnfasis}
-                </Revelado>
-              </div>
+              <p className="mx-auto mt-[88px] max-w-[20ch] text-[clamp(2.8rem,5.4vw,4.4rem)] font-medium leading-[1.08] tracking-[-0.03em] underline decoration-current/25 underline-offset-[0.18em] decoration-[0.05em]">
+                {textos.idea.aparatosFrase}
+              </p>
 
               <div className="mt-12">
                 <Dispositivos etiqueta={textos.idea.aparatos} />

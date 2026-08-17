@@ -36,8 +36,8 @@ import { useReducedMotion } from './motion';
 
 /** Lo que se enseña en cada uno. El `alt` va en el `aria-label` del contenedor. */
 const APARATOS = [
-  { src: '/video/mac-servicio.mp4', clase: 'w-full sm:w-[74%]' },
-  { src: '/video/iphone.mp4', clase: 'w-[46%] sm:w-[21%]' },
+  { src: '/video/mac-servicio.mp4', clase: 'w-full sm:w-[68%]' },
+  { src: '/video/iphone.mp4', clase: 'w-[46%] sm:w-[19%]' },
 ];
 
 export function Dispositivos({ etiqueta }: { etiqueta: string }) {
@@ -57,20 +57,7 @@ export function Dispositivos({ etiqueta }: { etiqueta: string }) {
       ref={raiz}
       role="img"
       aria-label={etiqueta}
-      /*
-       * **Más grandes, pero no a pantalla completa.**
-       *
-       * Estaban en `max-w-5xl` —1024 px— con el portátil al 68 %, y a 1990 de ancho
-       * eso los dejaba pequeños en medio de mucho negro. Suben a 1400, que es donde
-       * el conjunto ocupa en torno a tres cuartos del alto de la ventana: se ve que
-       * son dos aparatos de verdad y **la frase de encima sigue en pantalla**, que
-       * era la condición.
-       *
-       * El límite es el alto, no el ancho: si algún día se suben más, la medida que
-       * lo delata es el alto del bloque contra el de la ventana — pasado el 85 % el
-       * texto de arriba se sale y esto deja de leerse como una escena.
-       */
-      className="mx-auto flex w-full max-w-[1400px] flex-col items-center justify-center gap-8 sm:flex-row sm:items-end sm:gap-[4%]">
+      className="mx-auto flex max-w-5xl flex-col items-center justify-center gap-8 sm:flex-row sm:items-end sm:gap-[4%]">
       {APARATOS.map((aparato) => (
         <div key={aparato.src} className={`relative ${aparato.clase}`}>
           <video
