@@ -56,3 +56,9 @@ studio/out/
 
 # Másteres de las fotos de la landing: en public/ van las versiones reducidas.
 Images/
+
+# graphify — el grafo se regenera con `graphify update .`, no se versiona.
+# La caché es de esta máquina y `settings.json.graphify-bak` es una copia que
+# hace el instalador. Lo que sí se comparte es `.claude/skills/graphify/`.
+graphify-out/
+.claude/settings.json.graphify-bak

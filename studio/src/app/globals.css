@@ -29,14 +29,19 @@
   --color-amber: #f5a623;
   --color-amber-soft: #fff4e0;
 
+
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
   --font-wordmark: var(--font-gothic), sans-serif;
+  /* La de leer. Sobrescribe la `--font-sans` de Tailwind, así que todo lo que no
+     pida otra cosa —incluido el `body`— cae aquí y no en la del sistema. */
+  --font-sans: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
 }
 
 html,
 body {
   background: var(--color-canvas);
   color: var(--color-ink);
+  font-family: var(--font-sans);
 }
 
 /*
@@ -55,55 +60,43 @@ body {
  * ------------------------------------------------------------------------ */
 
 /*
- * El wordmark de la portada, a lo ancho del viewport y en hueco.
+ * El wordmark de la cabecera, que va fija sobre todo lo demás.
  *
- * En hueco porque es la regla de la marca y no se rompe por parecerse más a la
- * referencia —que lo lleva macizo—: el contorno es lo que hace que este nombre
- * sea este nombre, en el splash de la app y aquí.
+ * Aquí se cayó la versión gigante en hueco a todo el ancho: en esta maqueta el
+ * nombre es pequeño y está arriba a la izquierda, y a 15 px un contorno de
+ * medio píxel no se lee — se ve como una letra sucia. Así que este es macizo. El
+ * hueco sigue vivo en `.wordmark`, que es lo que usa el pie.
  *
- * `cqw` y no `vw`: se mide contra el contenedor, así que la misma pieza sirve
- * igual a pantalla completa que dentro de una caja más estrecha. El 19.3 sale
- * de medirlo, no de estimarlo: son ocho caracteres de una fuente muy expandida,
- * y a ese tamaño la palabra toca los dos bordes.
+ * **El color lo pone JavaScript, y no fue la primera opción.** La cabecera no se
+ * mueve y por debajo pasan el blanco de la portada y el negro de la sección
+ * siguiente, así que con un color fijo el nombre desaparece en uno de los dos.
+ * Lo natural sería `mix-blend-mode: difference`, y **no funciona aquí**: la
+ * cabecera es `fixed`, eso crea un contexto de apilado propio, y dentro de él la
+ * mezcla no tiene detrás la página sino nada — el nombre salía blanco sobre
+ * blanco, invisible. Comprobado en pantalla, no deducido.
+ *
+ * Así que el color lo decide `Header.tsx` mirando qué sección tiene debajo. La
+ * transición está aquí para que el cambio no sea un salto seco.
  */
-.wordmark-hero {
+.wordmark-mark {
+  /*
+   * Vuelve a la gothic expandida de la marca — la misma del splash de la app.
+   *
+   * Se probó aquí, se descartó, y el descarte estaba mal diagnosticado: a 15 px
+   * una expandida se lee como un logotipo pegado encima, pero el problema era el
+   * tamaño y no la letra. A 30 px funciona, que es el cuerpo que este tipo de
+   * letra necesita. Por el camino cayeron la grotesca del titular —el nombre se
+   * confundía con un texto más— y la monoespaciada.
+   */
   font-family: var(--font-wordmark);
-  font-size: 21.4cqw;
-  line-height: 0.86;
-  /* En una sola línea siempre. Si parte, deja de ser un cartel y además la
-     medida del ajuste deja de cuadrar. */
-  white-space: nowrap;
   letter-spacing: -0.02em;
-  color: transparent;
-  /* En `em` para que el grosor acompañe al tamaño: fijo en píxeles
-     desaparecería en un monitor grande y engordaría en un móvil. */
-  -webkit-text-stroke: 0.013em var(--color-ink);
+  transition: color 260ms cubic-bezier(0.65, 0.05, 0.36, 1);
+}
 
-  /*
-   * La caja de la línea no es donde está la tinta.
-   *
-   * Con `line-height` menor que 1, la "b" empieza 0.0622em **por debajo** del
-   * borde superior de la caja y el rabo de la "p" sale 0.0892em **por debajo**
-   * del inferior. Medido con `measureText`, no estimado.
-   *
-   * Por eso separar esto con `mt`/`pt` no funciona: se ajusta la caja y lo que
-   * se ve es la tinta. Estos dos márgenes cancelan esa diferencia, y van en
-   * `em` para que la cancelación valga a cualquier tamaño de pantalla.
-   */
-  /*
-   * Medidos para `destrier`, no heredados de `bi&hapia`.
-   *
-   * El de abajo es **negativo** y ese es el punto: `destrier` no tiene ningún
-   * descendente, así que la tinta acaba en la línea base, 0.0638em **por
-   * encima** del borde inferior de la caja. Con el valor de la palabra anterior
-   * —que sí tenía la "p"— quedaba un hueco claro de casi medio centímetro entre
-   * las letras y el vídeo.
-   */
-  --ink-top: 0.0642em;
-  --ink-bottom: -0.0638em;
-
-  /* El rabo de la "p" queda tocando lo que venga debajo. */
-  margin-bottom: var(--ink-bottom);
+@media (prefers-reduced-motion: reduce) {
+  .wordmark-mark {
+    transition: none;
+  }
 }
 
 /*
@@ -183,6 +176,65 @@ body {
      consigo mismo y no se ve la costura. */
   to {
     transform: translate3d(-50%, 0, 0);
+  }
+}
+
+/*
+ * La entrada de la cabecera.
+ *
+ * Va en CSS y no en JavaScript como la de la portada porque aquí no hay nada que
+ * medir: no cambia de sitio, solo aparece. Los tiempos son los mismos que los de
+ * `Hero.tsx` — la espera con la frase junta y luego todo a la vez.
+ *
+ * `both` es lo que importa: sin él la cabecera se vería durante los 800 ms de
+ * espera y volvería a desaparecer al arrancar la animación.
+ */
+@keyframes bh-entra {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.entra {
+  animation: bh-entra 700ms cubic-bezier(0.65, 0.05, 0.36, 1) 800ms both;
+}
+
+/*
+ * La misma entrada pero subiendo, para el portátil de la portada.
+ *
+ * **La hace CSS y no JavaScript, y eso es la regla, no el detalle.** La versión
+ * anterior la montaba un efecto: ponía las piezas a `opacity: 0` y las traía dos
+ * fotogramas después. Cuando ese efecto no llegaba a correr, lo que quedaba era
+ * una portada en blanco — el titular incluido. Una animación de CSS se ejecuta
+ * sola aunque el JavaScript no aparezca nunca.
+ *
+ * Y el titular ya no entra: está desde el primer pintado y nada le toca la
+ * opacidad. Lo que se anima es lo que se puede permitir no verse un instante.
+ */
+@keyframes bh-entra-abajo {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 26px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.entra-abajo {
+  animation: bh-entra-abajo 900ms cubic-bezier(0.65, 0.05, 0.36, 1) 120ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entra,
+  .entra-abajo {
+    animation: none;
   }
 }
 

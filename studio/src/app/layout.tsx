@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { IBM_Plex_Mono, Special_Gothic_Expanded_One } from 'next/font/google';
+import { IBM_Plex_Mono, Inter_Tight, Special_Gothic_Expanded_One } from 'next/font/google';
 
 import './globals.css';
 
@@ -16,12 +16,31 @@ const plexMono = IBM_Plex_Mono({
 });
 
 /*
- * Dos voces y no tres.
+ * La grotesca de los titulares.
+ *
+ * La referencia que se está replicando escribe todo —titular, párrafos, nav— en
+ * una grotesca neutra y estrecha, del corte de Helvetica Now. Inter Tight es la
+ * que más se le acerca de las que se pueden servir sin licencia, y es la
+ * variante estrecha: la Inter normal es visiblemente más ancha y el titular
+ * partido a los dos lados deja de cuadrar.
+ *
+ * No sustituye a la gothic expandida: esa sigue siendo el wordmark de la marca y
+ * solo se usa ahí.
+ */
+const interTight = Inter_Tight({
+  weight: ['400', '500'],
+  subsets: ['latin'],
+  variable: '--font-grotesk',
+});
+
+/*
+ * Tres voces, y cada una tiene un solo trabajo.
  *
  * Hubo aquí una serif editorial para las frases grandes de la landing. Se quitó:
- * la marca funciona con la de display para lo grande y la monoespaciada para
- * etiquetas y datos, y una tercera no encajaba. Se retira también la carga de la
- * fuente — tenerla descargándose sin usarla es peso en cada visita.
+ * no encajaba y se retiró también su carga — tenerla descargándose sin usarla es
+ * peso en cada visita. Lo que hay ahora es la grotesca para leer, la
+ * monoespaciada para etiquetas y datos, la gothic expandida solo para el nombre
+ *.
  */
 
 export const metadata: Metadata = {
@@ -46,7 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     // y todo cae a la fuente del sistema sin avisar.
     <html
       lang="es"
-      className={`${gothic.variable} ${plexMono.variable}`}>
+      className={`${gothic.variable} ${plexMono.variable} ${interTight.variable}`}>
       <body className="antialiased">{children}</body>
     </html>
   );

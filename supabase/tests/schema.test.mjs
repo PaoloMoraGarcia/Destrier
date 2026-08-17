@@ -138,6 +138,7 @@ for (const file of [
   '0006_creator_analytics.sql',
   '0007_course_landing.sql',
   '0008_reserved_handles.sql',
+  '0009_landing_requests.sql',
 ]) {
   try {
     await client.query(readFileSync(`${MIGRATIONS}/${file}`, 'utf8'));
@@ -400,6 +401,11 @@ await client.query(`
 await client.query(`
   grant select on all tables in schema public to anon, authenticated;
   grant insert, update, delete on all tables in schema public to authenticated;
+  -- anon puede insertar en las solicitudes de la landing, igual que en el
+  -- proyecto real: allí Supabase le da permisos sobre public por defecto y quien
+  -- decide de verdad es la RLS. Sin esto, el permission denied llegaría antes
+  -- que la policy y el test estaría comprobando otra cosa.
+  grant insert on public.landing_requests to anon;
 `);
 
 const anonFeed = await asUser(null, 'select * from feed_items');
@@ -850,6 +856,53 @@ record(
   landingCols.rowCount === 0
     ? 'ninguna columna de precio'
     : `columnas de precio: ${landingCols.rows.map((r) => r.column_name).join(', ')}`
+);
+
+/* ---------------------------------------------------------------------------
+ * Las solicitudes de la landing
+ *
+ * La mitad que importa de esta tabla no es que se pueda escribir: es que **no se
+ * pueda leer**. La clave pública de Supabase viaja en el navegador de todo el que
+ * entre en la web, así que una policy de `select` abierta a `anon` sería
+ * publicar los nombres, los correos y las ideas de todo el que haya escrito.
+ *
+ * Y no hay `select` porque no hay policy — con RLS activo, lo que no se permite
+ * queda prohibido. Eso es fácil de romper sin enterarse: basta con que alguien
+ * añada un `for all` en vez de un `for insert`. Por eso se comprueba.
+ * ------------------------------------------------------------------------ */
+console.log('\n=== 11. Solicitudes de la landing ===');
+
+await client.query(`set role anon`);
+
+await expectSuccess(
+  client,
+  'Cualquiera puede mandar una solicitud, sin cuenta',
+  `insert into landing_requests (name, email, teach, who, outcome)
+   values ('Ana', 'ana@example.com', 'freediving', 'people who already swim', 'hold a breath safely')`
+);
+
+/*
+ * Y aquí la parte que casi se me escapa: **una lectura prohibida por RLS no da
+ * error, devuelve cero filas.** El error de permisos solo aparece si falta el
+ * `grant`, que es otra cosa. Así que esto no se comprueba con `expectFailure`
+ * sino contando: si volviera cero por un `permission denied`, el test pasaría
+ * igual y no estaría probando nada.
+ */
+const leidas = await client.query('select * from landing_requests');
+record(
+  'Pero nadie puede leerlas con la clave pública',
+  leidas.rowCount === 0,
+  leidas.rowCount === 0 ? 'devuelve 0 filas' : `¡devuelve ${leidas.rowCount}!`
+);
+
+await client.query('reset role');
+
+// El control positivo, sin el cual lo de arriba no demuestra nada: la fila está.
+const cuantas = await client.query('select count(*)::int as n from landing_requests');
+record(
+  'Y la fila estaba ahí: el cero de antes es la policy, no una tabla vacía',
+  cuantas.rows[0].n === 1,
+  `${cuantas.rows[0].n} fila(s) para el superusuario`
 );
 
 console.log('\n========================================');

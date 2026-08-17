@@ -33,12 +33,12 @@ export async function createClient() {
       },
       setAll(list) {
         // En un Server Component las cookies son de solo lectura. El refresco de
-        // sesión lo hace el middleware, que sí puede escribirlas; aquí se ignora
+        // sesión lo hace `proxy.ts`, que sí puede escribirlas; aquí se ignora
         // en silencio a propósito.
         try {
           list.forEach(({ name, value, options }) => store.set(name, value, options));
         } catch {
-          /* Server Component: lo resuelve el middleware. */
+          /* Server Component: lo resuelve `proxy.ts`. */
         }
       },
     },

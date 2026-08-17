@@ -1,7 +1,14 @@
 'use client';
 
 import Lenis from 'lenis';
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 
 /**
  * El movimiento de la landing.
@@ -9,7 +16,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
  * Dos piezas, y la segunda es la que de verdad importa:
  *
  *  1. **Lenis** amortigua la rueda, para que el scroll no salte de golpe.
- *  2. **`useReveal` interpola desde la posición en pantalla**, no suelta una
+ *  2. **El registro interpola desde la posición en pantalla**, no suelta una
  *     clase al entrar. Es la diferencia entre parecerse y ser igual: en una
  *     aparición por clase, si paras a media animación el texto termina de
  *     aparecer solo; aquí, si paras, se queda donde está. La página responde a
@@ -18,6 +25,14 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
  * Lo comprobé en la referencia parando el scroll a mitad: la palabra se quedó
  * quieta a media opacidad. Ese es el detalle que se está copiando.
  *
+ * **Aquí no entra GSAP.** Se añadió al proyecto para la columna arrastrable, que
+ * necesita inercia de verdad, y vive en `drag.ts`. Para lo atado al scroll no
+ * aporta: `ScrollTrigger` daría exactamente este mismo valor de progreso, pero
+ * la página no scrollea en la ventana sino en un contenedor propio, y eso
+ * obligaría a montar un `scrollerProxy` — una capa más entre el scroll y el
+ * píxel, para sustituir treinta líneas que ya funcionan y que se pueden leer
+ * enteras.
+ *
  * **Todo se apaga con `prefers-reduced-motion`.** Con esta cantidad de
  * movimiento no es cortesía: es la diferencia entre una página y un mareo.
  */
@@ -25,20 +40,125 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 /** La curva de la referencia. Es una curva, no una marca. */
 export const EASE = 'cubic-bezier(0.65, 0.05, 0.36, 1)';
 
-function useReducedMotion() {
-  const [reduced, setReduced] = useState(false);
+/**
+ * La consulta, una sola vez para todo el módulo.
+ *
+ * `matchMedia` **devuelve un objeto nuevo en cada llamada**, y eso ya costó una
+ * pasada: un `change` disparado a mano sobre uno recién pedido no llega nunca al
+ * oyente que escucha en otro. Con una sola instancia, todos los suscriptores
+ * miran exactamente lo mismo.
+ */
+const CONSULTA = '(prefers-reduced-motion: reduce)';
+let consulta: MediaQueryList | null = null;
 
-  useEffect(() => {
-    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReduced(query.matches);
+const media = () => {
+  if (typeof window === 'undefined') return null;
+  consulta ??= window.matchMedia(CONSULTA);
+  return consulta;
+};
 
-    const listen = (event: MediaQueryListEvent) => setReduced(event.matches);
-    query.addEventListener('change', listen);
-    return () => query.removeEventListener('change', listen);
-  }, []);
-
-  return reduced;
+/**
+ * Si quien mira ha pedido que no haya movimiento.
+ *
+ * **Va con `useSyncExternalStore` y no con un efecto**, que es lo que había. Aquel
+ * arrancaba en `false` y llamaba a `setState` dentro del efecto para corregirse:
+ * un render de más en cada carga, un fotograma en el que el movimiento sí está
+ * encendido para quien pidió que no lo estuviera, y un aviso de React con toda la
+ * razón —poner estado dentro de un efecto es pedir renders en cascada—.
+ *
+ * Esta es la API que React tiene para exactamente esto: leer algo de fuera que
+ * cambia por su cuenta. El valor correcto está **en el primer render**, y el
+ * servidor —que no tiene `matchMedia`— responde `false`, que es el único valor
+ * honesto ahí: no se puede saber la preferencia de nadie sin un navegador.
+ */
+export function useReducedMotion() {
+  return useSyncExternalStore(
+    (avisar) => {
+      const q = media();
+      if (!q) return () => {};
+      q.addEventListener('change', avisar);
+      return () => q.removeEventListener('change', avisar);
+    },
+    () => media()?.matches ?? false,
+    () => false
+  );
 }
+
+/**
+ * La instancia de Lenis en marcha, si la hay.
+ *
+ * Vive fuera del componente porque `irA` la necesita desde cualquier parte de la
+ * página. Con movimiento reducido no hay instancia, y `irA` lo resuelve saltando
+ * sin animación — que es lo que se ha pedido en ese caso.
+ */
+let activo: Lenis | null = null;
+
+/**
+ * Baja hasta un ancla con desplazamiento suave.
+ *
+ * Sin esto, un `href="#contact"` salta de golpe: el ancla nativa no sabe nada de
+ * Lenis y el viaje se pierde. Y no vale un `scroll-behavior: smooth` en CSS,
+ * porque Lenis gobierna el contenedor y los dos se pelearían.
+ */
+export function irA(selector: string, duracion = 1100) {
+  const destino = document.querySelector(selector);
+  const raiz = document.querySelector<HTMLElement>('[data-scroll-root]');
+  if (!destino || !raiz) return;
+
+  const desde = raiz.scrollTop;
+  const hasta = destino.getBoundingClientRect().top + desde;
+
+  // Sin Lenis —movimiento reducido— el salto es instantáneo a propósito: quien
+  // ha pedido que no haya movimiento no quiere un viaje de segundo y medio.
+  if (!activo) {
+    raiz.scrollTop = hasta;
+    return;
+  }
+
+  /*
+   * El viaje se hace aquí y no con `scrollTo` de Lenis.
+   *
+   * Con el suyo se quedaba **1080 px corto** de forma reproducible: pedía 4255 y
+   * paraba en 3175, con el formulario aún fuera de pantalla. Se descartó que
+   * fuera un tope —con la rueda la página llega al final— y que la maqueta
+   * cambiara de alto por el camino. Dar con el motivo exacto dentro de Lenis no
+   * compensaba, y un tween propio de doce líneas es determinista y se puede
+   * comprobar.
+   *
+   * Lenis se para mientras dura, así que no hay dos cosas escribiendo el mismo
+   * scroll a la vez, y se reanuda al acabar.
+   */
+  activo.stop();
+
+  const arranque = performance.now();
+
+  const paso = (ahora: number) => {
+    const p = Math.min(1, (ahora - arranque) / duracion);
+    const suave = 1 - Math.pow(1 - p, 3);
+
+    raiz.scrollTop = desde + (hasta - desde) * suave;
+
+    if (p < 1) requestAnimationFrame(paso);
+    else activo?.start();
+  };
+
+  requestAnimationFrame(paso);
+}
+
+/*
+ * Aquí hubo un `cerrarScroll` / `abrirScroll` para una pantalla de entrada con
+ * puerta. **No vuelve.**
+ *
+ * Cerrar el `overflow` del contenedor deja la página entera inalcanzable si
+ * cualquier eslabón de la cadena que la reabre falla — y uno falló: con
+ * `prefers-reduced-motion`, la preferencia se conoce un instante después de que
+ * el efecto ya haya cerrado, así que la página se quedaba bloqueada para siempre.
+ *
+ * Si algún día hace falta otra vez, la regla es que **la puerta se abra sola**:
+ * un temporizador de seguridad, o directamente no tocar el `overflow` y usar solo
+ * una pista alta. Nada que dependa de que un manejador acierte para que la web se
+ * pueda usar.
+ */
 
 /**
  * El contenedor que scrollea.
@@ -62,6 +182,8 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
       lerp: 0.085,
     });
 
+    activo = lenis;
+
     let frame = 0;
     const tick = (time: number) => {
       lenis.raf(time);
@@ -72,6 +194,7 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     return () => {
       cancelAnimationFrame(frame);
       lenis.destroy();
+      activo = null;
     };
   }, [reduced]);
 
@@ -95,90 +218,70 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
  */
 interface Subject {
   node: HTMLElement;
+  /** Fracción de pantalla que dura el recorrido. Más alto, más lento. */
   span: number;
+  /** Cuánto sube el nodo, en píxeles. Se ignora si hay `paint`. */
   rise: number;
+  /** Retraso relativo, para escalonar hermanos. En fracción de pantalla. */
   offset: number;
   /**
-   * Si está, el nodo no aparece él: reparte su progreso en dos fases —primero
-   * las palabras del título, después los bloques que lo acompañan—. Con `pin`,
-   * además clava la pantalla mientras lo hace.
+   * A qué altura de la pantalla el progreso vale 0, en fracción — 1 es el borde
+   * de abajo. Por defecto lo decide `offset`.
    */
-  scene?: { words: HTMLElement[]; items: HTMLElement[]; pin: boolean };
+  startAt?: number;
+  /**
+   * Si está, el nodo no aparece él: recibe el progreso y pinta lo que quiera.
+   * Es lo que permite que una frase se ilumine palabra a palabra sin que el
+   * registro sepa nada de palabras.
+   */
+  paint?: (progress: number) => void;
 }
 
 const subjects = new Set<Subject>();
 let loop = 0;
 
 /**
- * Reparte un tramo de progreso entre varios elementos.
+ * Reparte un tramo de progreso entre varios elementos y devuelve, para cada uno,
+ * cuánto le toca de 0 a 1.
  *
- * Las ventanas se solapan: cada uno tarda el doble de lo que le tocaría, así que
- * casi siempre hay dos entrando a la vez. Sin solape se ve como un contador, a
- * tirones, y no como una frase construyéndose.
+ * Las ventanas se solapan: cada uno dura lo que dos, así que casi siempre hay dos
+ * entrando a la vez. Sin solape se ve como un contador, a tirones, y no como una
+ * frase construyéndose.
+ *
+ * **Los arranques se reparten sobre `1 - ventana`, no sobre 1.** Con la versión
+ * anterior el último elemento arrancaba tan tarde que a progreso 1 solo había
+ * recorrido la mitad de su ventana: se quedaba en 0,875 y no llegaba nunca. En una
+ * frase eso es la última palabra permanentemente más apagada que las demás, y solo
+ * se ve cuando lo mides. Ahora el último termina justo en 1.
  */
-function revelar(parts: HTMLElement[], progress: number) {
-  if (parts.length === 0) return;
+export function repartir(total: number, index: number, progress: number) {
+  if (total <= 0) return 0;
+  if (total === 1) return 1 - Math.pow(1 - Math.min(1, Math.max(0, progress)), 3);
 
-  const step = 1 / parts.length;
+  const ventana = Math.min(1, 2 / total);
+  const inicio = (index / (total - 1)) * (1 - ventana);
+  const local = (progress - inicio) / ventana;
+  const clamped = Math.min(1, Math.max(0, local));
 
-  parts.forEach((part, index) => {
-    const local = (progress - index * step) / (step * 2);
-    const clamped = Math.min(1, Math.max(0, local));
-    const eased = 1 - Math.pow(1 - clamped, 3);
-
-    part.style.opacity = String(eased);
-    part.style.transform = `translate3d(0, ${(1 - eased) * 16}px, 0)`;
-  });
+  return 1 - Math.pow(1 - clamped, 3);
 }
 
 function paintAll() {
   const height = window.innerHeight;
 
-  for (const { node, span, rise, offset, scene } of subjects) {
+  for (const { node, span, rise, offset, startAt, paint } of subjects) {
     const rect = node.getBoundingClientRect();
 
-    // La escena, en dos fases: primero entra el título palabra a palabra y
-    // después los bloques que lo acompañan. Clavando, lo de dentro va `sticky`,
-    // así que la página parece detenida y lo que avanza es la escena.
-    if (scene) {
-      let progress: number;
-
-      if (scene.pin) {
-        const runway = Math.max(1, rect.height - height);
-
-        // El reparto arranca **antes** de que la pantalla se clave: cuando el
-        // borde superior de la pista todavía está a un 40 % de pantalla del
-        // tope.
-        //
-        // Sin esta ventaja, al engancharse el clavado quedaba una pantalla
-        // entera vacía con todo a opacidad 0 — y lo mismo al volver a subir.
-        // Ahora, para cuando la página se detiene, la primera palabra ya está
-        // dentro y nunca hay un fotograma en blanco.
-        const lead = height * 0.4;
-        progress = Math.min(1, Math.max(0, (lead - rect.top) / (runway + lead)));
-      } else {
-        // Sin clavado —cuando la escena no cabría en la pantalla— el reparto se
-        // mide contra la travesía del bloque, de asomar por abajo a quedar
-        // arriba del todo.
-        const crossing = Math.max(1, height * 0.75);
-        progress = Math.min(1, Math.max(0, (height * 0.85 - rect.top) / crossing));
-      }
-
-      // El título ocupa el primer tramo del recorrido y los bloques el resto.
-      // Así se lee lo que la escena dice antes de que llegue el detalle.
-      const CORTE = 0.55;
-
-      revelar(scene.words, progress / CORTE);
-      revelar(scene.items, (progress - CORTE) / (1 - CORTE));
-
-      continue;
-    }
-
-    // Empieza cuando el borde superior entra por abajo y termina `span`
+    // Empieza cuando el borde superior cruza `startAt` y termina `span`
     // pantallas más arriba. `offset` retrasa a los hermanos para escalonar.
-    const start = height * (1 - offset * 0.12);
+    const start = height * (startAt ?? 1 - offset * 0.12);
     const progress = (start - rect.top) / (height * span);
     const clamped = Math.min(1, Math.max(0, progress));
+
+    if (paint) {
+      paint(clamped);
+      continue;
+    }
 
     // Suavizado en la salida: el último tramo se estira, así que el texto se
     // asienta en vez de llegar de golpe a su sitio.
@@ -191,7 +294,7 @@ function paintAll() {
   loop = subjects.size > 0 ? requestAnimationFrame(paintAll) : 0;
 }
 
-function subscribe(subject: Subject) {
+export function subscribe(subject: Subject) {
   subjects.add(subject);
   if (!loop) loop = requestAnimationFrame(paintAll);
 
@@ -212,11 +315,8 @@ function subscribe(subject: Subject) {
  * cualquier página con veinte apariciones.
  */
 export function useReveal<T extends HTMLElement>(options?: {
-  /** Fracción de pantalla que recorre la aparición. Más alto, más lento. */
   span?: number;
-  /** Cuánto sube, en píxeles. */
   rise?: number;
-  /** Retraso relativo, para escalonar hermanos. En fracción de pantalla. */
   offset?: number;
 }) {
   const ref = useRef<T>(null);
@@ -265,148 +365,6 @@ export function Reveal({
 }
 
 /**
- * Una escena que se construye con la pantalla clavada.
- *
- * Dos fases: primero entra el título palabra a palabra y después los bloques que
- * lo acompañan. La pista mide algo más que una pantalla y lo de dentro va
- * `sticky`, así que mientras pasa, la página **parece detenida** y lo que avanza
- * es la escena. Si la página siguiera bajando, el scroll estaría haciendo dos
- * cosas a la vez.
- *
- * **No clava si la escena no cabe en la pantalla.** Una escena clavada más alta
- * que la ventana es una página rota: se congela el scroll y parte del contenido
- * queda fuera sin forma de llegar a él. Se mide al montar y al redimensionar, y
- * si no cabe se comporta como flujo normal con la misma aparición. Ajustar los
- * tamaños a mano acierta en el móvil que pruebas y falla en el siguiente.
- */
-export function PinnedScene({
-  words,
-  className = '',
-  label,
-  lead,
-  items,
-  itemsClassName = '',
-}: {
-  words: string[];
-  className?: string;
-  /** Etiqueta pequeña de la sección. Va dentro y sin animación. */
-  label?: ReactNode;
-  /** Línea de entrada bajo el título, si la hay. Entra con los bloques. */
-  lead?: ReactNode;
-  /** Los bloques que entran después del título. */
-  items?: ReactNode[];
-  itemsClassName?: string;
-}) {
-  const track = useRef<HTMLDivElement>(null);
-  const stage = useRef<HTMLDivElement>(null);
-  const reduced = useReducedMotion();
-  const [cabe, setCabe] = useState(true);
-
-  // ¿Cabe la escena en la pantalla? De eso depende que se pueda clavar.
-  //
-  // Se mide el **contenido**, no el escenario. El escenario mide una pantalla
-  // entera cuando está clavado, así que medirlo a él daba siempre "no cabe",
-  // eso lo desclavaba, y al desclavarse volvía a caber: un bucle que acababa
-  // con ninguna sección clavando.
-  useEffect(() => {
-    const node = stage.current;
-    if (!node) return;
-
-    const medir = () => {
-      // Un margen de respiro: si va justa, tampoco conviene clavarla.
-      setCabe(node.scrollHeight + 48 <= window.innerHeight);
-    };
-
-    medir();
-    window.addEventListener('resize', medir);
-    return () => window.removeEventListener('resize', medir);
-  }, []);
-
-  const clava = cabe && !reduced;
-
-  useEffect(() => {
-    const node = track.current;
-    if (!node) return;
-
-    const words = Array.from(node.querySelectorAll<HTMLElement>('[data-word]'));
-    const items = Array.from(node.querySelectorAll<HTMLElement>('[data-item]'));
-
-    // Quien ha pedido que no haya movimiento no debería encontrarse la página
-    // atrapada: se ve todo y no se clava nada.
-    if (reduced) {
-      [...words, ...items].forEach((part) => {
-        part.style.opacity = '1';
-        part.style.transform = 'none';
-      });
-      return;
-    }
-
-    return subscribe({ node, span: 1, rise: 0, offset: 0, scene: { words, items, pin: clava } });
-  }, [reduced, clava]);
-
-  return (
-    <div
-      ref={track}
-      // Clavando, la pista mide una pantalla y media: la media pantalla de sobra
-      // es exactamente lo que dura la pausa. Sin clavar no hace falta pista.
-      className={clava ? 'relative h-[150svh]' : 'relative'}>
-      <div
-        className={`flex flex-col items-center px-6 ${
-          clava ? 'sticky top-0 h-svh justify-center' : 'py-10'
-        }`}>
-        {/* El contenido va en su propia caja, de alto natural, y es la que se
-            mide. La de fuera cambia de alto según se clave o no. */}
-        <div ref={stage} className="flex w-full flex-col items-center">
-        {/*
-          La etiqueta va **dentro** y **sin animación**: se ve durante toda la
-          pausa. Fuera se iría justo cuando más falta hace.
-        */}
-        {label && (
-          <p className="mb-8 font-mono text-[11px] uppercase tracking-[0.28em] opacity-45">
-            {label}
-          </p>
-        )}
-
-        {/* `w-full`: como ítem flex, el párrafo crecería hasta su contenido y
-            entonces `flex-wrap` no envolvería nada — la frase se saldría por la
-            derecha en vez de partir y centrarse. */}
-        <p className={`flex w-full flex-wrap justify-center gap-x-[0.28em] ${className}`}>
-          {words.map((word, index) => (
-            <span
-              key={`${word}-${index}`}
-              data-word
-              className="inline-block will-change-transform"
-              style={{ opacity: 0 }}>
-              {word}
-            </span>
-          ))}
-        </p>
-
-        {lead && (
-          <p
-            data-item
-            className="mt-10 max-w-[46ch] text-center text-[clamp(1rem,1.6vw,1.2rem)] leading-relaxed opacity-60"
-            style={{ opacity: 0 }}>
-            {lead}
-          </p>
-        )}
-
-        {items && items.length > 0 && (
-          <div className={`mt-14 w-full ${itemsClassName}`}>
-            {items.map((item, index) => (
-              <div key={index} data-item style={{ opacity: 0 }}>
-                {item}
-              </div>
-            ))}
-          </div>
-        )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/**
  * La marquesina.
  *
  * Dos mitades idénticas, **cada una de al menos el ancho del contenedor**, y un
@@ -420,8 +378,7 @@ export function PinnedScene({
  * por eso no se puede acertar poniéndolo a mano.
  *
  * El ancho mínimo va en `vw` y no en `%`: la pista es `w-max`, así que un `100%`
- * se resolvería contra ella misma y se mordería la cola. La cinta es siempre de
- * ancho completo, y lo que sobre lo recorta el contenedor.
+ * se resolvería contra ella misma y se mordería la cola.
  *
  * Se para con `prefers-reduced-motion`.
  */
@@ -485,7 +442,7 @@ export function Curtain() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-[100] bg-[#f0f0ec]"
+      className="pointer-events-none fixed inset-0 z-[100] bg-[#ffffff]"
       style={{ animation: reduced ? undefined : `bh-curtain 620ms ${EASE} forwards` }}
     />
   );
