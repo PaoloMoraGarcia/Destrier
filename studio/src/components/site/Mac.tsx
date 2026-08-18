@@ -1,8 +1,9 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
-import { useReducedMotion } from './motion';
+import { EASE, useReducedMotion } from './motion';
 
 /**
  * El portátil de la portada, **con su transparencia de verdad**.
@@ -42,13 +43,30 @@ import { useReducedMotion } from './motion';
  * deshacer nada. Desmultiplicar para volver a multiplicar es de donde salen los
  * halos oscuros en el borde del recorte.
  *
- * ## Y si nada de esto llega a correr
+ * ## El póster ya no es un recambio: es lo primero que se ve
  *
- * Hay póster. Sin JavaScript lo sirve un `<noscript>`, y si WebGL no arranca se
- * pide desde aquí. **No se descarga en el camino bueno**, que es lo que hace que
- * un recambio de 376 KB no le cueste nada a quien no lo necesita.
- * La regla de la casa es que la portada no puede depender de JavaScript para
- * verse; aquí eso significa que sin él no habrá movimiento, pero habrá portátil.
+ * Medido en producción: el titular aparece a los **0,4 s** y el portátil tardaba
+ * entre 4 y 6, así que había un agujero de varios segundos donde debía estar el
+ * aparato. Se probaron las dos vías obvias —adelantar el índice del MP4 y bajar el
+ * peso— y **el agujero seguía**: el navegador no espera al archivo entero, espera a
+ * tener búfer, y eso no baja recortando megas.
+ *
+ * Así que en ese hueco hay una imagen desde el primer pintado, y el vídeo **cruza
+ * por encima** cuando está listo.
+ *
+ * **El póster es el fotograma cero del propio vídeo.** Eso es lo que hace que el
+ * relevo no se vea: no se cambia una imagen por otra, se funden dos imágenes casi
+ * idénticas y lo único que cambia es que una empieza a moverse. Si algún día se
+ * recodifica el vídeo, **hay que volver a sacar el póster** o el cruce se notará.
+ *
+ * Va por `next/image` y no por un `<img>` suelto: así Vercel lo sirve en AVIF y al
+ * tamaño de cada pantalla, que para una foto con este detalle es menos de la mitad
+ * que el JPEG de origen. `priority` porque es lo primero que se ve — sin eso, el
+ * navegador lo trata como una imagen cualquiera y llega tarde, que es justo lo que
+ * se está arreglando.
+ *
+ * Sin JavaScript no hay lienzo, pero el póster está en el marcado: sin él no habrá
+ * movimiento, pero habrá portátil. Ésa es la regla de la casa.
  */
 
 /**
@@ -135,7 +153,8 @@ export function Mac() {
   const video = useRef<HTMLVideoElement>(null);
   const lienzo = useRef<HTMLCanvasElement>(null);
   const reduced = useReducedMotion();
-  const [sinWebGL, setSinWebGL] = useState(false);
+  /** En cuanto el lienzo pinta su primer fotograma, el póster se retira fundiendo. */
+  const [pintado, setPintado] = useState(false);
 
   useEffect(() => {
     const v = video.current;
@@ -166,26 +185,19 @@ export function Mac() {
       depth: false,
     }) ?? null) as WebGLRenderingContext | null;
 
-    if (!gl) {
-      setSinWebGL(true);
-      return;
-    }
+    // Sin WebGL no hay nada que hacer, y tampoco hace falta: el póster ya está
+    // puesto debajo y se queda, porque nadie va a pedirle que se aparte.
+    if (!gl) return;
 
     const programa = gl.createProgram();
     const vs = compilar(gl, gl.VERTEX_SHADER, VERTICE);
     const fs = compilar(gl, gl.FRAGMENT_SHADER, FRAGMENTO);
-    if (!programa || !vs || !fs) {
-      setSinWebGL(true);
-      return;
-    }
+    if (!programa || !vs || !fs) return;
 
     gl.attachShader(programa, vs);
     gl.attachShader(programa, fs);
     gl.linkProgram(programa);
-    if (!gl.getProgramParameter(programa, gl.LINK_STATUS)) {
-      setSinWebGL(true);
-      return;
-    }
+    if (!gl.getProgramParameter(programa, gl.LINK_STATUS)) return;
     gl.useProgram(programa);
 
     // Dos triángulos que cubren el lienzo. No hay más geometría en toda la pieza.
@@ -213,7 +225,7 @@ export function Mac() {
     let vfc = 0;
     let enPantalla = true;
     let pestanaVisible = true;
-    let pintado = false;
+    let primero = false;
 
     const medir = () => {
       // El lienzo se pide a la resolución real de la pantalla, hasta 2x: es un
@@ -245,9 +257,10 @@ export function Mac() {
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
-      if (!pintado) {
-        pintado = true;
+      if (!primero) {
+        primero = true;
         canvas.style.opacity = '1';
+        setPintado(true);
       }
     };
 
@@ -327,6 +340,30 @@ export function Mac() {
     // portátil está reservado desde el primer pintado y nada salta cuando el
     // vídeo llega. Es la mitad de color del fotograma, 2560x1416.
     <div className="relative w-full" style={{ aspectRatio: '2560 / 1416' }}>
+      {/*
+        El póster, debajo de todo y desde el primer pintado.
+
+        Se queda montado también después del cruce, en vez de desmontarse: quitarlo
+        del árbol mientras se está fundiendo es exactamente cómo se consigue un
+        parpadeo. Ocupa una capa y no cuesta nada.
+      */}
+      <Image
+        src={POSTER}
+        alt=""
+        aria-hidden
+        fill
+        priority
+        // La medida real en pantalla, para que el optimizador no sirva de más.
+        sizes="(max-width: 767px) 86vw, min(86vw, 1560px)"
+        className="object-contain"
+        style={{
+          // El fundido va aquí y no en una clase: si la clase no llega, el póster
+          // se queda encima del vídeo tapándolo para siempre.
+          opacity: pintado ? 0 : 1,
+          transition: reduced ? 'none' : `opacity 900ms ${EASE}`,
+        }}
+      />
+
       <video
         ref={video}
         muted
@@ -343,25 +380,15 @@ export function Mac() {
       <canvas
         ref={lienzo}
         aria-hidden
-        // Aparece cuando ha pintado su primer fotograma. Sin esto se ve un
-        // parpadeo del lienzo vacío antes de que el vídeo tenga datos.
-        className="block h-full w-full transition-opacity duration-300"
-        style={{ opacity: 0 }}
+        className="relative block h-full w-full"
+        style={{
+          // Aparece fundiéndose sobre el póster, que es el mismo fotograma: lo
+          // único que se ve cambiar es que la imagen empieza a moverse.
+          opacity: 0,
+          transition: reduced ? 'none' : `opacity 900ms ${EASE}`,
+        }}
       />
 
-      {/* Si WebGL no arranca. Se pide desde JavaScript, así que en el camino
-          bueno este archivo no se descarga nunca. */}
-      {sinWebGL && (
-        // eslint-disable-next-line @next/next/no-img-element -- recambio estático, sin optimizar, pedido solo cuando falla WebGL.
-        <img src={POSTER} alt="" aria-hidden className="absolute inset-0 h-full w-full" />
-      )}
-
-      {/* Y sin JavaScript. El navegador solo lo pide si el scripting está
-          apagado, que es exactamente cuando hace falta. */}
-      <noscript>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={POSTER} alt="" className="absolute inset-0 h-full w-full" />
-      </noscript>
     </div>
   );
 }
