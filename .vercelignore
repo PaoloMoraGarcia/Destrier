@@ -1,0 +1,13 @@
+# Vercel no lee `.gitignore`. Sin este archivo, un `vercel deploy` lanzado desde la
+# raíz intenta subir **8,7 GB**: los másteres ProRes de `Images/` —5,4 GB— y todo lo
+# demás que no está en el repositorio.
+#
+# El despliegue de verdad sale de GitHub, que solo tiene lo commiteado. Esto es la
+# red por si alguien vuelve a lanzar el CLI a mano.
+Images/
+graphify-out/
+node_modules/
+ios/
+android/
+.expo/
+supabase/tests/.pgdata/
