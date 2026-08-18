@@ -91,7 +91,7 @@ const PACK = {
   ancho: '/video/mac-empaquetado.mp4',
   estrecho: '/video/mac-empaquetado-movil.mp4',
 };
-const POSTER = '/video/mac-poster.jpg';
+const POSTER = '/video/mac-poster.png';
 
 /**
  * Cuántas veces por segundo se sube el fotograma a la GPU.
