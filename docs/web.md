@@ -734,3 +734,19 @@ global, porque el handle va delante y dos creadores no se pisan— y añade
   al creador.
 - **Verificación.** `creator_verifications` existe y el trigger bloquea el cobro
   sin ella, pero no hay flujo para solicitarla ni para revisarla.
+
+### Vercel: el framework se declara, no se detecta
+
+El proyecto se creó apuntando a la raíz del repositorio —donde vive la app de
+Expo—, así que Vercel detectó **`Other`** y se quedó con esa detección. Al mover
+después el *Root Directory* a `studio/` **la detección no se repite**, y con
+`Other` la configuración es «publica `public/` si existe, o la carpeta entera»:
+Vercel servía `studio/public/` como sitio estático, que no tiene `index.html`, y
+por eso **cualquier URL devolvía 404** con `x-vercel-error: NOT_FOUND` en texto
+plano — el 404 de la plataforma, no el de Next.
+
+Cuesta de ver porque el despliegue sale en verde: construye bien, no hay error en
+el log, y aun así no sirve nada.
+
+Queda declarado en `studio/vercel.json` en lugar de en el panel: así viaja con el
+repositorio y no depende de que nadie recuerde un ajuste.

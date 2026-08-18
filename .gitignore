@@ -62,3 +62,5 @@ Images/
 # hace el instalador. Lo que sí se comparte es `.claude/skills/graphify/`.
 graphify-out/
 .claude/settings.json.graphify-bak
+.vercel
+.env*
