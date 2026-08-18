@@ -296,6 +296,21 @@ let adaptador = AVAssetWriterInputPixelBufferAdaptor(
     ]
 )
 
+/*
+ * **El índice va delante, no al final.**
+ *
+ * `AVAssetWriter` escribe el átomo `moov` —el índice del contenedor— al final del
+ * archivo salvo que se le pida lo contrario. Reproduciendo desde disco da igual;
+ * **por internet es la diferencia entre 0,5 y 8 segundos**, porque el navegador no
+ * puede pintar ni el primer fotograma hasta haber leído el índice, y para eso tiene
+ * que descargarse el archivo entero.
+ *
+ * Medido en producción con el portátil de la portada: 16 MB con el índice al final
+ * tardaban **7,7 s** en aparecer a 12 Mbps. No se ve en local, donde el archivo ya
+ * está ahí, y por eso llegó hasta producción sin que nadie lo notara.
+ */
+escritor.shouldOptimizeForNetworkUse = true
+
 escritor.add(entradaEscritor)
 escritor.startWriting()
 escritor.startSession(atSourceTime: .zero)
